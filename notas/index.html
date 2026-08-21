@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Procesador de Noticias | XHBAL</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #2563eb;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 25px;
+    }
+
+    .mode-selector {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .btn-mode {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid var(--secondary);
+      background: transparent;
+      color: var(--secondary);
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-mode.active {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    input[type="url"], textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+
+    textarea {
+      height: 180px;
+      resize: vertical;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-action:hover {
+      background: #1d4ed8;
+    }
+
+    .progress-container {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      background: #e2e8f0;
+      border-radius: 10px;
+      height: 20px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--secondary);
+      transition: width 0.2s ease;
+    }
+
+    .result-container {
+      display: none;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px dashed #e2e8f0;
+    }
+
+    .result-content {
+      background: #f1f5f9;
+      padding: 20px;
+      border-radius: 8px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      margin-bottom: 20px;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #64748b;
+      background: white;
+      color: #334155;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .result-content, .result-content * {
+        visibility: visible;
+      }
+      .result-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Procesador de Noticias XHBAL</h1>
+
+  <div class="mode-selector">
+    <button class="btn-mode active" id="btnModeUrl" onclick="setMode('url')">Procesar URL</button>
+    <button class="btn-mode" id="btnModeText" onclick="setMode('text')">Procesar Texto</button>
+  </div>
+
+  <div class="input-group" id="groupUrl">
+    <input type="url" id="inputUrl" placeholder="https://ejemplo.com/noticia-de-hoy">
+  </div>
+
+  <div class="input-group" id="groupText" style="display: none;">
+    <textarea id="inputText" placeholder="Pega el texto de la nota periodística aquí..."></textarea>
+  </div>
+
+  <button class="btn-action" onclick="procesarNota()">Convertir Nota</button>
+
+  <div class="progress-container" id="progressContainer">
+    <span id="progressText">Procesando... 0%</span>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+  </div>
+
+  <div class="result-container" id="resultContainer">
+    <h3>Resultado de la Nota:</h3>
+    <div class="result-content" id="resultText"></div>
+
+    <div class="action-buttons">
+      <button class="btn-secondary" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let mode = 'url';
+  const BACKEND_URL = 'https://www.notas.xhbal.com/procesar';
+
+  function setMode(newMode) {
+    mode = newMode;
+    document.getElementById('btnModeUrl').classList.toggle('active', mode === 'url');
+    document.getElementById('btnModeText').classList.toggle('active', mode === 'text');
+    document.getElementById('groupUrl').style.display = mode === 'url' ? 'block' : 'none';
+    document.getElementById('groupText').style.display = mode === 'text' ? 'block' : 'none';
+  }
+
+  async function procesarNota() {
+    const payload = mode === 'url' 
+      ? { type: 'url', content: document.getElementById('inputUrl').value }
+      : { type: 'text', content: document.getElementById('inputText').value };
+
+    if (!payload.content.trim()) {
+      alert('Por favor ingresa un enlace o texto válido.');
+      return;
+    }
+
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const resultContainer = document.getElementById('resultContainer');
+
+    resultContainer.style.display = 'none';
+    progressContainer.style.display = 'block';
+    
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      if (currentProgress < 90) {
+        currentProgress += Math.floor(Math.random() * 5) + 1;
+        progressBar.style.width = currentProgress + '%';
+        progressText.innerText = `Procesando nota... ${currentProgress}%`;
+      }
+    }, 300);
+
+    try {
+      const response = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      clearInterval(interval);
+      progressBar.style.width = '100%';
+      progressText.innerText = '¡Completado! 100%';
+
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        document.getElementById('resultText').innerText = data.resultado || 'Sin respuesta del servidor.';
+        resultContainer.style.display = 'block';
+      }, 500);
+
+    } catch (error) {
+      clearInterval(interval);
+      progressContainer.style.display = 'none';
+      alert('Ocurrió un error al conectar con el servidor.');
+      console.error(error);
+    }
+  }
+</script>
+
+</body>
+</html>
