@@ -72,15 +72,27 @@ async function extraerConJina(url) {
     headers['Authorization'] = `Bearer ${JINA_API_KEY}`;
   }
 
-  const response = await fetch(endpoint, { headers });
+const fetch = require('node-fetch'); // O axios según tengas configurado
+
+async function obtenerTextoDeUrl(urlOriginal) {
+  // Anteponemos el servicio de Jina Reader para bypass de seguridad y limpieza de HTML
+  const jinaUrl = `https://r.jina.ai/${urlOriginal}`;
+
+  const response = await fetch(jinaUrl, {
+    method: 'GET',
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/plain, text/html'
+    }
+  });
 
   if (!response.ok) {
-    throw new Error(`Error Jina Reader (${response.status}): ${response.statusText}`);
+    throw new Error(`No se pudo extraer la noticia de la URL (Estado: ${response.status})`);
   }
 
-  return await response.text();
+  const textoMarkdown = await response.text();
+  return textoMarkdown;
 }
-
 /**
  * Flujo principal: Extracción / Entrada + Reescritura con Gemini.
  */
