@@ -28,7 +28,7 @@ app.use(express.json());
  */
 function generarPromptEditorial(contenidoFuente, estiloEditorial, instruccionesExtra = '') {
   return `
-Eres un editor periodístico sénior y locutor de radio. Tu trabajo es reescribir la siguiente noticia, transformando su estilo y estructura sin comprometer la precisión de los hechos para que quede lista para locución al aire.
+Eres un editor periodístico sénior y redactor de un noticiero de radio formal. Tu trabajo es reescribir la siguiente noticia con un tono profesional, institucional, sobrio y rigurosamente periodístico.
 
 --- CONTENIDO FUENTE ---
 ${contenidoFuente}
@@ -36,26 +36,25 @@ ${contenidoFuente}
 
 ESTILO EDITORIAL OBJETIVO: "${estiloEditorial}"
 
-DIRECTRICES RIGUROSAS:
-1. PRECISIÓN FACTUAL: Utiliza ÚNICAMENTE nombres, lugares, fechas, cifras y datos presentes en la fuente. Prohibido alucinar o agregar datos no documentados.
-2. DEPURACIÓN: Omite anuncios, menús de navegación, enlaces a otras notas o elementos de pie de página devueltos por la extracción.
-3. ADAPTACIÓN DE ESTILO:
-   - Si es "Crónica Narrativa": Prioriza la tensión dramática, la secuencia temporal, la experiencia humana y los detalles ambientales.
-   - Si es "Agencia / Pirámide Invertida": Responde qué, quién, cuándo, dónde y por qué en los primeros dos párrafos. Tono directo, sobrio y conciso.
-   - Si es "Análisis / Institucional": Enfatiza los protocolos de emergencia, el papel de las autoridades y las condiciones del entorno.
+DIRECTRICES OBLIGATORIAS:
+1. TONO PROFESIONAL Y SOBRIO: Elimina adjetivos dramáticos, frases novelescas o recursos literarios (como "Corría el año...", "en un acto cargado de expectativa", "bajo la cultura humilde"). Usa un lenguaje periodístico formal de agencia.
+2. ESTRUCTURA DE PIRÁMIDE INVERTIDA: Responde en los dos primeros párrafos QUÉ ocurrió, QUINÉNES intervienen, DÓNDE se ubica la nota y POR QUÉ es relevante.
+3. DATOS HISTÓRICOS Y CONTEXTO: Presenta los antecedentes e historia de la empresa en un párrafo de contexto breve, cronológico y objetivo, sin romantizar el proceso.
+4. PRECISIÓN FACTUAL: Utiliza ÚNICAMENTE nombres, cargos, lugares, fechas y cifras presentes en la fuente. Prohibido inventar o alucinar datos.
+5. LECTURA EN VOZ ALTA: Sintaxis clara y directa, apta para locución en un noticiero matutino serio.
 
-${instruccionesExtra ? `INSTRUCCIONES ADICIONALES DEL EDITOR:\n${instruccionesExtra}\n` : ''}
+${instruccionesExtra ? `INSTRUCCIONES ADICIONALES:\n${instruccionesExtra}\n` : ''}
 
-FORMATO DE SALIDA (Aplica formato Markdown):
-# [Título renovado e impactante]
-**[Bajada / Subtítulo explicativo]**
+FORMATO DE SALIDA (Markdown):
+# [Título informativo, directo y profesional]
+**[Bajada / Subtítulo con los datos principales de la noticia]**
 
 *Ubicación / Fecha*
 
-[Cuerpo de la nota reescrito en párrafos estructurados y fluidos adaptados a lectura radial]
+[Cuerpo de la nota estructurado en párrafos sobrios, directos y con enfoque informativo]
 
 ---
-*Procesado automáticamente | Estilo: ${estiloEditorial}*
+*Noticiero XHBAL | Estilo: ${estiloEditorial}*
 `;
 }
 
@@ -137,13 +136,13 @@ app.post('/procesar', async (req, res) => {
   }
 
   try {
-    const resultado = await procesarNoticia({
-      type: type || 'url',
-      content,
-      estilo: estilo || 'Crónica Narrativa',
-      instruccionesExtra: instruccionesExtra || 'Párrafos breves adaptados para lectura ágil o locución de radio.',
-      guardarArchivo: false
-    });
+   const resultado = await procesarNoticia({
+  type: type || 'url',
+  content,
+  estilo: estilo || 'Agencia / Pirámide Invertida',
+  instruccionesExtra: instruccionesExtra || 'Tono sobrio, periodístico e institucional. Cero adjetivos dramáticos.',
+  guardarArchivo: false
+});
 
     res.json({ resultado });
   } catch (error) {
