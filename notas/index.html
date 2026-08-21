@@ -149,19 +149,57 @@
       font-weight: 600;
     }
 
+    /* Reglas corregidas para la impresión / exportación a PDF */
+    @page {
+      size: letter;
+      margin: 18mm 15mm; /* Margen de seguridad estandarizado */
+    }
+
     @media print {
+      body {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
       body * {
         visibility: hidden;
       }
-      .result-content, .result-content * {
+
+      /* Muestra el contenedor del resultado */
+      #resultContainer, #resultContainer * {
         visibility: visible;
       }
-      .result-content {
+
+      #resultContainer {
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
-        background: white;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+      }
+
+      /* Ajusta el contenido para que respete el ancho útil sin cortar texto */
+      .result-content {
+        background: white !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 11pt;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* Oculta los elementos interactivos e instrucciones */
+      .action-buttons, h3, .mode-selector, .input-group, .btn-action, .progress-container {
+        display: none !important;
       }
     }
   </style>
@@ -216,10 +254,9 @@
   }
 
   async function procesarNota() {
-    // Cambia esto o agrégalo en el payload:
     const payload = mode === 'url' 
-  ? { type: 'url', content: document.getElementById('inputUrl').value, estilo: 'Agencia / Pirámide Invertida' }
-  : { type: 'text', content: document.getElementById('inputText').value, estilo: 'Agencia / Pirámide Invertida' };
+      ? { type: 'url', content: document.getElementById('inputUrl').value, estilo: 'Agencia / Pirámide Invertida' }
+      : { type: 'text', content: document.getElementById('inputText').value, estilo: 'Agencia / Pirámide Invertida' };
 
     if (!payload.content.trim()) {
       alert('Por favor ingresa un enlace o texto válido.');
