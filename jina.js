@@ -109,7 +109,7 @@ export async function procesarNoticia({ type = 'url', content, estilo = 'Crónic
     }
 
     console.log(`\n[2/3] 🧠 Procesando reescritura con Gemini...`);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = generarPromptEditorial(contenidoMarkdown, estilo, instruccionesExtra);
 
     const result = await model.generateContent(prompt);
