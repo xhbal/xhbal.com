@@ -216,9 +216,10 @@
   }
 
   async function procesarNota() {
+    // Cambia esto o agrégalo en el payload:
     const payload = mode === 'url' 
-      ? { type: 'url', content: document.getElementById('inputUrl').value }
-      : { type: 'text', content: document.getElementById('inputText').value };
+  ? { type: 'url', content: document.getElementById('inputUrl').value, estilo: 'Agencia / Pirámide Invertida' }
+  : { type: 'text', content: document.getElementById('inputText').value, estilo: 'Agencia / Pirámide Invertida' };
 
     if (!payload.content.trim()) {
       alert('Por favor ingresa un enlace o texto válido.');
