@@ -1,12 +1,15 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const JINA_API_KEY = process.env.JINA_API_KEY || '';
+const PORT = process.env.PORT || 3000;
 
 if (!GEMINI_API_KEY) {
   console.error('❌ Error: Falta la variable GEMINI_API_KEY en el archivo .env');
@@ -14,27 +17,32 @@ if (!GEMINI_API_KEY) {
 }
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const app = express();
+
+// Middlewares para la API Web
+app.use(cors());
+app.use(express.json());
 
 /**
  * Plantilla del prompt estructurado para la reescritura editorial.
  */
-function generarPromptEditorial(markdownOriginal, estiloEditorial, instruccionesExtra = '') {
+function generarPromptEditorial(contenidoFuente, estiloEditorial, instruccionesExtra = '') {
   return `
-Eres un editor periodístico sénior. Tu trabajo es reescribir la siguiente noticia extraída de la web, transformando su estilo y estructura sin comprometer la precisión de los hechos.
+Eres un editor periodístico sénior y locutor de radio. Tu trabajo es reescribir la siguiente noticia, transformando su estilo y estructura sin comprometer la precisión de los hechos para que quede lista para locución al aire.
 
---- CONTENIDO FUENTE (VÍA JINA) ---
-${markdownOriginal}
+--- CONTENIDO FUENTE ---
+${contenidoFuente}
 --- FIN CONTENIDO FUENTE ---
 
 ESTILO EDITORIAL OBJETIVO: "${estiloEditorial}"
 
 DIRECTRICES RIGUROSAS:
-1. PRECISION FACTUAL: Utiliza ÚNICAMENTE nombres, lugares, fechas, cifras y datos presentes en la fuente. Prohibido alucinar o agregar datos no documentados.
+1. PRECISIÓN FACTUAL: Utiliza ÚNICAMENTE nombres, lugares, fechas, cifras y datos presentes en la fuente. Prohibido alucinar o agregar datos no documentados.
 2. DEPURACIÓN: Omite anuncios, menús de navegación, enlaces a otras notas o elementos de pie de página devueltos por la extracción.
 3. ADAPTACIÓN DE ESTILO:
-   - Si es "Crónica Narrativa": Prioriza la tensión dramática, la secuencia temporal, la experiencia humana y los detalles ambientales del rescate.
+   - Si es "Crónica Narrativa": Prioriza la tensión dramática, la secuencia temporal, la experiencia humana y los detalles ambientales.
    - Si es "Agencia / Pirámide Invertida": Responde qué, quién, cuándo, dónde y por qué en los primeros dos párrafos. Tono directo, sobrio y conciso.
-   - Si es "Análisis / Institucional": Enfatiza los protocolos de emergencia, el papel de las autoridades de rescate y las condiciones meteorológicas/marítimas.
+   - Si es "Análisis / Institucional": Enfatiza los protocolos de emergencia, el papel de las autoridades y las condiciones del entorno.
 
 ${instruccionesExtra ? `INSTRUCCIONES ADICIONALES DEL EDITOR:\n${instruccionesExtra}\n` : ''}
 
@@ -44,7 +52,7 @@ FORMATO DE SALIDA (Aplica formato Markdown):
 
 *Ubicación / Fecha*
 
-[Cuerpo de la nota reescrito en párrafos estructurados y fluidos]
+[Cuerpo de la nota reescrito en párrafos estructurados y fluidos adaptados a lectura radial]
 
 ---
 *Procesado automáticamente | Estilo: ${estiloEditorial}*
@@ -75,32 +83,39 @@ async function extraerConJina(url) {
 }
 
 /**
- * Flujo principal: Extracción + Reescritura + Almacenamiento local.
+ * Flujo principal: Extracción / Entrada + Reescritura con Gemini.
  */
-export async function procesarNoticia({ url, estilo, instruccionesExtra = '', guardarArchivo = true }) {
+export async function procesarNoticia({ type = 'url', content, estilo = 'Crónica Narrativa', instruccionesExtra = '', guardarArchivo = false }) {
   try {
-    console.log(`\n[1/3] 📡 Extrayendo contenido desde Jina Reader...`);
-    const contenidoMarkdown = await extraerConJina(url);
-    console.log(`✓ Extraídos ${contenidoMarkdown.length} caracteres.`);
+    let contenidoMarkdown = content;
 
-    console.log(`\n[2/3] 🧠 Procesando reescritura con Gemini 2.5 Flash...`);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    if (type === 'url') {
+      console.log(`\n[1/3] 📡 Extrayendo contenido desde Jina Reader...`);
+      contenidoMarkdown = await extraerConJina(content);
+      console.log(`✓ Extraídos ${contenidoMarkdown.length} caracteres.`);
+    } else {
+      console.log(`\n[1/3] 📝 Procesando texto provisto directamente (${content.length} caracteres)...`);
+    }
+
+    console.log(`\n[2/3] 🧠 Procesando reescritura con Gemini...`);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const prompt = generarPromptEditorial(contenidoMarkdown, estilo, instruccionesExtra);
 
     const result = await model.generateContent(prompt);
     const notaFinal = result.response.text();
 
     console.log(`\n[3/3] ✨ Proceso completado exitosamente.\n`);
-    console.log('=' .repeat(60));
-    console.log(notaFinal);
-    console.log('=' .repeat(60));
 
     if (guardarArchivo) {
-      const folder = './noticias_procesadas';
-      await fs.mkdir(folder, { recursive: true });
-      const filename = path.join(folder, `nota_${Date.now()}.md`);
-      await fs.writeFile(filename, notaFinal, 'utf-8');
-      console.log(`\n💾 Archivo guardado localmente en: ${filename}`);
+      try {
+        const folder = './noticias_procesadas';
+        await fs.mkdir(folder, { recursive: true });
+        const filename = path.join(folder, `nota_${Date.now()}.md`);
+        await fs.writeFile(filename, notaFinal, 'utf-8');
+        console.log(`💾 Archivo guardado localmente en: ${filename}`);
+      } catch (err) {
+        console.warn('⚠️ No se pudo guardar el archivo localmente (normal en entornos serverless):', err.message);
+      }
     }
 
     return notaFinal;
@@ -112,21 +127,49 @@ export async function procesarNoticia({ url, estilo, instruccionesExtra = '', gu
 }
 
 // ---------------------------------------------------------
-// EJECUCIÓN CON CAPTURA DINÁMICA DE URL
+// RUTA HTTP PARA LA INTERFAZ WEB (www.xhbal.com/notas)
 // ---------------------------------------------------------
-// Toma la URL capturada en la terminal (soporta comillas y espacios)
-const urlCapturada = process.argv.slice(2).join(' ').trim();
+app.post('/procesar', async (req, res) => {
+  const { type, content, estilo, instruccionesExtra } = req.body;
 
-// URL de respaldo solo si NO escribes nada en la terminal
-const urlPorDefecto = 'https://www.elheraldodechiapas.com.mx/local/dramatico-rescate-en-chiapas-hallan-a-pescadores-flotando-en-una-hielera-1234567.html';
+  if (!content) {
+    return res.status(400).json({ error: 'No se proporcionó ningún contenido o URL.' });
+  }
 
-const urlAProcesar = urlCapturada || urlPorDefecto;
+  try {
+    const resultado = await procesarNoticia({
+      type: type || 'url',
+      content,
+      estilo: estilo || 'Crónica Narrativa',
+      instruccionesExtra: instruccionesExtra || 'Párrafos breves adaptados para lectura ágil o locución de radio.',
+      guardarArchivo: false
+    });
 
-console.log(`\n🔗 URL a procesar: ${urlAProcesar}\n`);
-
-procesarNoticia({
-  url: urlAProcesar,
-  estilo: 'Crónica Narrativa',
-  instruccionesExtra: 'Párrafos breves adaptados para lectura ágil o locución de radio.',
-  guardarArchivo: true
+    res.json({ resultado });
+  } catch (error) {
+    res.status(500).json({ error: 'Ocurrió un error al procesar la nota.', detalles: error.message });
+  }
 });
+
+app.get('/', (req, res) => {
+  res.send('Servidor de procesamiento de noticias XHBAL activo.');
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor iniciado en el puerto ${PORT}`);
+});
+
+// ---------------------------------------------------------
+// EJECUCIÓN OPCIONAL DESDE TERMINAL
+// ---------------------------------------------------------
+const urlCapturada = process.argv.slice(2).join(' ').trim();
+if (urlCapturada) {
+  console.log(`\n🔗 Modo consola activado. Procesando: ${urlCapturada}\n`);
+  procesarNoticia({
+    type: 'url',
+    content: urlCapturada,
+    estilo: 'Crónica Narrativa',
+    instruccionesExtra: 'Párrafos breves adaptados para lectura ágil o locución de radio.',
+    guardarArchivo: true
+  });
+}
