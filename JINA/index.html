@@ -32,7 +32,7 @@
 
     .container {
       width: 100%;
-      max-width: 100%;
+      max-width: 1000px;
       margin: 0 auto;
       background: var(--card-bg);
       border-radius: 6px;
@@ -82,22 +82,11 @@
       gap: 5px;
     }
 
-    button:hover {
-      background-color: var(--primary-hover);
-    }
+    button:hover { background-color: var(--primary-hover); }
+    button:disabled { background-color: var(--border); color: var(--text-muted); cursor: not-allowed; }
 
-    button:disabled {
-      background-color: var(--border);
-      color: var(--text-muted);
-      cursor: not-allowed;
-    }
-
-    .btn-opcion-4 {
-      background-color: #0d9488;
-    }
-    .btn-opcion-4:hover {
-      background-color: #0f766e;
-    }
+    .btn-opcion-4 { background-color: #0d9488; }
+    .btn-opcion-4:hover { background-color: #0f766e; }
 
     #loading {
       display: none;
@@ -135,12 +124,6 @@
       margin-bottom: 8px;
     }
 
-    .resultado-header h3 {
-      font-size: 14px;
-      color: var(--primary);
-      font-weight: 600;
-    }
-
     textarea {
       width: 100%;
       height: 400px;
@@ -155,78 +138,71 @@
     #contenedorOpcion4 {
       display: none;
       width: 100%;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 12px;
     }
 
-    /* Listado plano y continuo sin cajas ni espacios grandes */
-    .bloque-medio {
-      margin-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-
-    .bloque-medio:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    .badge-portal {
-      font-size: 11px;
-      font-weight: 700;
-      color: #0f766e;
-      background: #f0fdfa;
-      padding: 2px 6px;
-      border-radius: 3px;
-      text-transform: uppercase;
-      border: 1px solid #ccfbf1;
-      display: inline-block;
-      margin-bottom: 6px;
-    }
-
-    .fila-nota {
+    /* Estilo de lista limpia y continua */
+    .lista-item {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
-      padding: 4px 0;
+      gap: 15px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
     }
 
-    .info-nota {
+    .lista-item:last-child {
+      border-bottom: none;
+    }
+
+    .lista-contenido {
       flex: 1;
     }
 
-    .titulo-noticia {
-      font-size: 14px;
-      color: var(--primary);
+    .lista-portal {
+      font-size: 10px;
       font-weight: 700;
-      line-height: 1.25;
+      color: #0d9488;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
       margin-bottom: 2px;
     }
 
-    .extracto-noticia {
-      font-size: 12px;
-      color: #475569;
+    .lista-titulo {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+
+    .lista-extracto {
+      font-size: 11px;
+      color: var(--text-muted);
       line-height: 1.35;
     }
 
-    .btn-enlace-individual {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
+    .btn-enlace-tabla {
       background-color: #0284c7;
       color: white;
-      padding: 3px 8px;
-      border-radius: 3px;
       text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 3px;
       font-size: 11px;
       font-weight: 600;
       white-space: nowrap;
-      margin-top: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       transition: background-color 0.2s;
+      margin-top: 4px;
     }
 
-    .btn-enlace-individual:hover {
-      background-color: #0369a1;
-    }
+    .btn-enlace-tabla:hover { background-color: #0369a1; }
 
     .alerta {
       padding: 8px 12px;
@@ -285,7 +261,7 @@
 
     <div class="resultado-container">
       <div class="resultado-header">
-        <h3 id="tituloResultado">Resultado Generado</h3>
+        <span id="labelEstado" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Vista de Resultados</span>
         <button id="btnCopiar" class="btn-secundario" style="display: none;" onclick="copiarAlPortapapeles()">
           📋 Copiar Texto
         </button>
@@ -312,12 +288,12 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    function renderizarOpcion4ConBotones(textoGuion) {
+    function renderizarOpcion4ComoLista(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
 
       const lineas = textoGuion.split('\n');
-      let notasPorPortal = {};
+      let notas = [];
       
       let portalActual = '';
       let tituloNota = '';
@@ -326,10 +302,8 @@
 
       function guardarNotaActual() {
         if (tituloNota && portalActual) {
-          if (!notasPorPortal[portalActual]) {
-            notasPorPortal[portalActual] = [];
-          }
-          notasPorPortal[portalActual].push({
+          notas.push({
+            portal: portalActual.replace(/[\[\]]/g, '').trim(),
             titulo: tituloNota.replace(/[\[\]]/g, '').replace(/^[•\-\*]\s*/, '').trim(),
             enlace: enlaceNota.replace(/[\[\]]/g, '').trim(),
             extracto: extractoNota.replace(/[\[\]]/g, '').trim()
@@ -362,44 +336,37 @@
       });
       guardarNotaActual();
 
-      let htmlAcumulado = `<h3 style="margin-bottom: 8px; color: #0f766e; font-size: 14px;">Monitoreo de Noticias Organizado por Medio</h3>`;
-
-      for (const [portal, notas] of Object.entries(notasPorPortal)) {
-        htmlAcumulado += `
-          <div class="bloque-medio">
-            <span class="badge-portal">📡 ${portal}</span>
-        `;
-
-        notas.forEach(nota => {
-          let urlLimpia = nota.enlace;
-          if (urlLimpia && !urlLimpia.startsWith('http')) {
-            urlLimpia = 'https://' + urlLimpia;
-          }
-          if (!urlLimpia || urlLimpia === 'https://') {
-            urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + portal)}`;
-          }
-
-          htmlAcumulado += `
-            <div class="fila-nota">
-              <div class="info-nota">
-                <div class="titulo-noticia">${nota.titulo}</div>
-                <div class="extracto-noticia">${nota.extracto}</div>
-              </div>
-              <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
-                🔗 Leer nota
-              </a>
-            </div>
-          `;
-        });
-
-        htmlAcumulado += `</div>`;
-      }
-
-      if (Object.keys(notasPorPortal).length === 0) {
+      if (notas.length === 0) {
         contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
-      } else {
-        contenedor.innerHTML = htmlAcumulado;
+        return;
       }
+
+      let htmlAcumulado = `<div style="font-size: 13px; font-weight: 700; color: #0f766e; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);">📊 Monitoreo General de Noticias en una Sola Lista</div>`;
+
+      notas.forEach(nota => {
+        let urlLimpia = nota.enlace;
+        if (urlLimpia && !urlLimpia.startsWith('http')) {
+          urlLimpia = 'https://' + urlLimpia;
+        }
+        if (!urlLimpia || urlLimpia === 'https://') {
+          urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + nota.portal)}`;
+        }
+
+        htmlAcumulado += `
+          <div class="lista-item">
+            <div class="lista-contenido">
+              <span class="lista-portal">${nota.portal}</span>
+              <div class="lista-titulo">${nota.titulo}</div>
+              <div class="lista-extracto">${nota.extracto}</div>
+            </div>
+            <a href="${urlLimpia}" target="_blank" class="btn-enlace-tabla">
+              🔗 Ver nota
+            </a>
+          </div>
+        `;
+      });
+
+      contenedor.innerHTML = htmlAcumulado;
     }
 
     async function solicitarGuion(endpoint, esOpcion4) {
@@ -466,7 +433,7 @@
         if (data.exito) {
           if (esOpcion4) {
             contenedorOpcion4.style.display = 'block';
-            renderizarOpcion4ConBotones(data.guion);
+            renderizarOpcion4ComoLista(data.guion);
             salidaGuion.value = data.guion;
           } else {
             salidaGuion.style.display = 'block';
