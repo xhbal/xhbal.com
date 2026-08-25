@@ -112,7 +112,7 @@ app.get('/health', (req, res) => {
 });
 
 // =========================================================
-// OPCIÓN 1: GUIÓN EDITADO / SINTETIZADO (EL QUE YA TIENES)
+// OPCIÓN 1: GUIÓN EDITADO / SINTETIZADO
 // =========================================================
 app.post('/api/generar-noticiero', async (req, res) => {
   try {
@@ -146,7 +146,7 @@ Formato de cada nota:
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un editor de noticias para radio commercial.' },
+        { role: 'system', content: 'Eres un editor de noticias para radio comercial.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.2,
@@ -158,6 +158,7 @@ Formato de cada nota:
     res.status(500).json({ exito: false, error: 'Error al generar guion editado.', detalle: error.message });
   }
 });
+
 // =========================================================
 // OPCIÓN 2: GUIÓN COMPLETO (FILTRADO Y REDACTADO INTEGRAL)
 // =========================================================
@@ -203,7 +204,7 @@ ${seccionNacionales}`;
         },
         { role: 'user', content: promptOriginal }
       ],
-      temperature: 0.3, // Elevado ligeramente para permitir que la IA redacte fluidamente con el contexto existente
+      temperature: 0.3,
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
@@ -214,4 +215,62 @@ ${seccionNacionales}`;
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar guion original.', detalle: error.message });
   }
+});
+
+// =========================================================
+// OPCIÓN 3: SÍNTESIS DE PRENSA (MONITOREO DE MEDIOS)
+// =========================================================
+app.post('/api/sintesis-prensa', async (req, res) => {
+  try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
+
+    const { hoy, fechaHoy, fechaAyer } = getFechasFiltro();
+    const fechaEmision = getFechaFormateada();
+    const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
+
+    const promptSintesis = `Fecha de hoy: ${fechaHoy}.
+
+OBJETIVO:
+Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para la mesa de trabajo de radio.
+
+REGLAS ESTRICTAS:
+1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido. Muestra únicamente los portales y notas que SÍ tienen extractos reales.
+2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios con el título y la bajada o extracto disponible.
+3. OMISIONES: Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
+
+ESTRUCTURA DE SALIDA:
+[Nombre del Portal] | [Fecha]
+- TÍTULO DE LA NOTA: Extracto o descripción disponible.
+
+════════════════════════════════════════
+PORTALES DE CHIAPAS:
+${seccionChiapas}
+
+════════════════════════════════════════
+PORTALES NACIONALES:
+${seccionNacionales}`;
+
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un analista de medios y jefe de prensa. Compilas monitoreos de prensa limpios, precisos y directos.' },
+        { role: 'user', content: promptSintesis }
+      ],
+      temperature: 0.1,
+      max_tokens: 8000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
+
+    res.json({ 
+      exito: true, 
+      guion: `SÍNTESIS DE PRENSA (MONITOREO DE MEDIOS)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+    });
+  } catch (error) {
+    res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });
