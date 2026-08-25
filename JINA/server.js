@@ -158,9 +158,8 @@ Formato de cada nota:
     res.status(500).json({ exito: false, error: 'Error al generar guion editado.', detalle: error.message });
   }
 });
-
 // =========================================================
-// OPCIÓN 2: GUIÓN ORIGINAL (CONSERVA REDACCIÓN INTEGRAL)
+// OPCIÓN 2: GUIÓN ORIGINAL (NOTAS COMPLETAS Y FILTRADAS)
 // =========================================================
 app.post('/api/generar-guion-original', async (req, res) => {
   try {
@@ -174,20 +173,20 @@ app.post('/api/generar-guion-original', async (req, res) => {
     const promptOriginal = `Hoy es ${hoy}. Fecha exacta: ${fechaHoy}.
 
 OBJETIVO:
-Generar una compilación de noticias con la REDACCIÓN ORIGINAL de los medios. Tu trabajo es únicamente LIMPIAR y FILTRAR, NO reescribir ni resumir.
+Generar una selección periodística limpia de las noticias MÁS IMPORTANTES de hoy. 
 
-REGLAS ESTRICTAS:
-1. CONSERVA LA REDACCIÓN ORIGINAL: Transcribe el cuerpo del texto tal como viene en la fuente original. NO resumas, NO cambies las palabras del autor.
-2. ELIMINA PUBLICIDAD Y BASURA: Filtra menús de navegación, textos de suscripción, redes sociales, publicidad, frases como "haz clic aquí" o banners.
-3. FILTRO DE FECHA: Solo noticias publicadas entre ${fechaAyer} y ${fechaHoy}.
-4. OMISIONES: Si hay información de EDUARDO RAMÍREZ, OMITIRLA por completo.
-5. SIN DUPLICADOS: Una sola noticia por portal.
-6. FORMATO DIRECTO: Sin introducciones ni saludos.
+REGLAS CRÍTICAS:
+1. SELECCIÓN: Elige MÁXIMO 1 NOTICIA PRINCIPAL por cada portal. Omite portales que no tengan notas con texto completo disponible.
+2. NO ESCRIBAS "Nota no disponible": Si no hay texto completo desarrollado para una noticia, SIMPLEMENTE OMÍTELO y pasa a la siguiente noticia válida.
+3. REDACCIÓN INTEGRAL: Transcribe el cuerpo completo de la nota tal como viene en la fuente original. No la resumas.
+4. LIMPIEZA: Elimina menús, publicidad, banners y frases de suscripción.
+5. EXCLUSIONES: Omitir cualquier nota que mencione a EDUARDO RAMÍREZ.
+6. FECHAS: Solo noticias publicadas entre ${fechaAyer} y ${fechaHoy}.
 
-FORMATO PARA CADA NOTA:
-[Fuente] | [Fecha y Hora]
-[TÍTULO ORIGINAL EN MAYÚSCULAS]
-[Texto íntegro y original de la nota, totalmente libre de publicidad y menús]
+FORMATO OBLIGATORIO PARA CADA NOTA:
+[Nombre del Portal] | [Fecha]
+[TÍTULO EN MAYÚSCULAS]
+[Cuerpo completo del texto de la noticia]
 
 ════════════════════════════════════════
 BLOQUE 2 — NOTICIAS CHIAPAS (NOTAS INTEGRALES)
@@ -203,23 +202,21 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un curador de contenido periodístico. Tu función es extraer noticias manteniendo su redacción original intacta, eliminando únicamente la publicidad y código basura del sitio.' },
+        { 
+          role: 'system', 
+          content: 'Eres un editor y curador de noticias de radio. Tu trabajo es filtrar únicamente las notas periodísticas que tengan cuerpo de texto completo, descartando enlaces vacíos o notas sin contenido, manteniendo su redacción original intacta.' 
+        },
         { role: 'user', content: promptOriginal }
       ],
       temperature: 0.1,
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ exito: true, guion: `GUION ORIGINAL (NOTAS COMPLETAS SIN EDITAR)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content });
+    res.json({ 
+      exito: true, 
+      guion: `GUION ORIGINAL (NOTAS COMPLETAS SIN EDITAR)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+    });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar guion original.', detalle: error.message });
   }
-});
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Servidor de Guiones activo en el puerto ${port}`);
 });
