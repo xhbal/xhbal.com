@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Procesador de Noticias | XHBAL</title>
+  <!-- Librería para generación directa de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #2563eb;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header-tools {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .header-tools h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .btn:hover { background-color: var(--secondary); }
+    .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+
+    .btn-secondary {
+      background-color: #475569;
+    }
+
+    .btn-secondary:hover { background-color: #64748b; }
+
+    .btn-edit {
+      background-color: #d97706;
+    }
+
+    .btn-edit:hover { background-color: #b45309; }
+
+    /* BARRA DE PROGRESO */
+    .progress-container {
+      display: none;
+      background: var(--card);
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .progress-status {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: #e2e8f0;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transition: width 0.3s ease;
+    }
+
+    .guion-box {
+      background: var(--card);
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      white-space: pre-wrap;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      min-height: 250px;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    .guion-box[contenteditable="true"] {
+      border: 2px dashed var(--secondary);
+      background-color: #ffffff;
+    }
+
+    .footer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    /* REGLAS PARA IMPRESIÓN */
+    @media print {
+      body { background-color: #ffffff; color: #000000; padding: 0; }
+      .header-tools, .progress-container, .footer-actions { display: none !important; }
+      .guion-box { box-shadow: none; padding: 0; margin: 0; font-size: 11pt; border: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- BARRA SUPERIOR -->
+    <div class="header-tools">
+      <h2>Guión de Noticias XHBAL</h2>
+      <button id="btnGenerar" class="btn" onclick="generarGuion()">Generar Guión</button>
+    </div>
+
+    <!-- MÓDULO DE BARRA DE PROGRESO -->
+    <div id="progressBox" class="progress-container">
+      <div class="progress-status">
+        <span id="statusText">Iniciando proceso...</span>
+        <span id="percentageText">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div id="progressBar" class="progress-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- CONTENEDOR DEL GUIÓN -->
+    <div id="guionContenido" class="guion-box" contenteditable="false">Haz clic en "Generar Guión" para procesar la información del día.</div>
+
+    <!-- BOTONES INFERIORES -->
+    <div class="footer-actions">
+      <button id="btnEditar" class="btn btn-edit" onclick="toggleEdicion()">Editar</button>
+      <button class="btn btn-secondary" onclick="window.print()">Imprimir</button>
+      <button class="btn btn-secondary" onclick="exportarPDF()">Guardar en PDF</button>
+    </div>
+  </div>
+
+  <script>
+    function actualizarProgreso(porcentaje, mensaje) {
+      document.getElementById("progressBar").style.width = porcentaje + "%";
+      document.getElementById("percentageText").innerText = porcentaje + "%";
+      document.getElementById("statusText").innerText = mensaje;
+    }
+
+    function generarGuion() {
+      const btn = document.getElementById("btnGenerar");
+      const progressBox = document.getElementById("progressBox");
+      const contenedor = document.getElementById("guionContenido");
+
+      btn.disabled = true;
+      progressBox.style.display = "block";
+      contenedor.innerText = "Procesando la información en tiempo real...";
+      contenedor.contentEditable = "false";
+      document.getElementById("btnEditar").innerText = "Editar";
+      actualizarProgreso(0, "Conectando con el servidor...");
+
+      const eventSource = new EventSource("/api/generar-guion-stream");
+
+      eventSource.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        actualizarProgreso(data.porcentaje, data.mensaje);
+
+        if (data.completo) {
+          contenedor.innerText = data.guion;
+          eventSource.close();
+          btn.disabled = false;
+        }
+      };
+
+      eventSource.onerror = function(err) {
+        console.error("Error SSE:", err);
+        actualizarProgreso(100, "Error de conexión con el servidor");
+        contenedor.innerText = "Ocurrió un error al generar el guión. Por favor intenta de nuevo.";
+        eventSource.close();
+        btn.disabled = false;
+      };
+    }
+
+    // Función para activar o desactivar la edición sobre el área del texto
+    function toggleEdicion() {
+      const contenedor = document.getElementById("guionContenido");
+      const btn = document.getElementById("btnEditar");
+
+      if (contenedor.contentEditable === "true") {
+        contenedor.contentEditable = "false";
+        btn.innerText = "Editar";
+        btn.classList.remove("btn-secondary");
+        btn.classList.add("btn-edit");
+      } else {
+        contenedor.contentEditable = "true";
+        contenedor.focus();
+        btn.innerText = "Guardar Cambios";
+        btn.classList.remove("btn-edit");
+        btn.classList.add("btn-secondary");
+      }
+    }
+
+    // Función para descargar directo en PDF
+    function exportarPDF() {
+      const elemento = document.getElementById("guionContenido");
+      const opciones = {
+        margin:       10,
+        filename:     'Guion_Noticias_XHBAL.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opciones).from(elemento).save();
+    }
+  </script>
+</body>
+</html>
