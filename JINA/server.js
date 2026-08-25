@@ -204,7 +204,7 @@ ${seccionNacionales}`;
       messages: [
         { 
           role: 'system', 
-          content: 'Eres el productor ejecutivo del noticiero de radio. Tu única tarea es entregar un guión limpio con notas redactadas para aire. Está prohibido escribir frases como "nota no disponible", "sin contenido" o dejar titulares sueltos. Si no hay datos de una nota, la ignoras por completo.' 
+          content: 'Eres el productor ejecutivo del noticiero de radio. Tu única tarea es entregar un guión limpio con notas redactadas para aire. Está prohibido escribir frases como "nota no disponible", "sin contenido" o dejar titulares sueltos. If no hay datos de una nota, la ignoras por completo.' 
         },
         { role: 'user', content: promptOriginal }
       ],
@@ -274,8 +274,9 @@ ${seccionNacionales}`;
     res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
   }
 });
+
 // =========================================================
-// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA
+// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA (HTML)
 // =========================================================
 app.post('/api/sintesis-con-enlaces', async (req, res) => {
   try {
@@ -285,7 +286,6 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
     const fechaEmision = getFechaFormateada();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    // PROMPT REESTRUCTURADO: Exigimos enlaces independientes por nota obligatoriamente
     const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes y asígnale a CADA una su propio enlace o la URL base del portal si no hay un enlace específico en el texto.
 
 REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
@@ -312,15 +312,63 @@ ${seccionNacionales}`;
         { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO).' },
         { role: 'user', content: promptOpcion4 }
       ],
-      temperature: 0.1, // Temperatura baja para que siga estrictamente la estructura
+      temperature: 0.1,
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ 
-      exito: true, 
-      guion: `SÍNTESIS DE PRENSA CON ENLACES INDIVIDUALES\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+    const textoRespuesta = response.data.choices[0].message.content;
+
+    // Procesador automático para convertir el formato de DeepSeek en HTML con botones interactivos
+    let htmlOutput = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b;">
+        <h2 style="color: #1e3a8a; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">
+          📰 SÍNTESIS DE PRENSA CON ENLACES INDIVIDUALES
+        </h2>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Generado el: ${fechaEmision}</p>
+    `;
+
+    const bloques = textoRespuesta.split(/PORTAL:/i).filter(b => b.trim().length > 0);
+
+    bloques.forEach(bloque => {
+      let lineas = bloque.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let portalNombre = lineas[0] || "Medio Informativo";
+      
+      let titulo = "";
+      let enlace = "#";
+      let extracto = "";
+
+      lineas.forEach(linea => {
+        if (linea.startsWith("TÍTULO:")) titulo = linea.replace("TÍTULO:", "").trim();
+        if (linea.startsWith("ENLACE:")) enlace = linea.replace("ENLACE:", "").trim();
+        if (linea.startsWith("EXTRACTO:")) extracto = linea.replace("EXTRACTO:", "").trim();
+      });
+
+      if (titulo) {
+        htmlOutput += `
+          <div style="margin-bottom: 15px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <span style="font-size: 11px; font-weight: bold; color: #0f766e; text-transform: uppercase; background: #f0fdfa; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px;">📡 ${portalNameCleaner(portalNombre)}</span>
+            <h4 style="font-size: 14px; color: #1e293b; margin: 4px 0 8px 0;">• ${titulo}</h4>
+            <p style="font-size: 13px; color: #475569; margin-bottom: 10px;">${extracto}</p>
+            <a href="${enlace.startsWith('http') ? enlace : 'https://' + enlace}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; background-color: #0284c7; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; transition: background 0.2s;">
+              🔗 Leer noticia completa
+            </a>
+          </div>
+        `;
+      }
     });
+
+    htmlOutput += `</div>`;
+
+    res.json({ exito: true, guion: htmlOutput });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
   }
+});
+
+function portalNameCleaner(nombre) {
+  return nombre.replace(/[\[\]]/g, '').trim();
+}
+
+app.listen(port, () => {
+  console.log(`Servidor de XHBAL corriendo en http://localhost:${port}`);
 });
