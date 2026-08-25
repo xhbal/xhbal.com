@@ -159,7 +159,7 @@ Formato de cada nota:
   }
 });
 // =========================================================
-// OPCIÓN 2: GUIÓN COMPLETO (NOTAS EXTENSAS SIN LEYENDAS VACÍAS)
+// OPCIÓN 2: GUIÓN COMPLETO (FILTRADO Y REDACTADO INTEGRAL)
 // =========================================================
 app.post('/api/generar-guion-original', async (req, res) => {
   try {
@@ -170,46 +170,47 @@ app.post('/api/generar-guion-original', async (req, res) => {
     const fechaEmision = getFechaFormateada();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptOriginal = `Hoy es ${hoy}. Fecha exacta: ${fechaHoy}.
+    const promptOriginal = `Fecha de hoy: ${fechaHoy}.
 
-OBJETIVO:
-Escribir un noticiero completo para radio. Toma la información raspada de los medios y redáctala en forma de notas informativas completas y bien desarrolladas (entre 2 y 4 párrafos por noticia).
+INSTRUCCIONES DE SELECCIÓN Y REDACCIÓN:
+1. Revisa los datos extraídos de las noticias de Chiapas y Nacionales.
+2. DISCARD SILENCIOSO: Si una noticia solo tiene un título de 1 línea o no contiene contexto suficiente, DESCÁRTALA POR COMPLETO. No incluyas su encabezado, no incluyas el nombre del portal, ni agregues comentarios aclaratorios.
+3. SELECCIÓN DE CONTENIDO: Selecciona únicamente las 10 a 12 noticias en total (sumando Chiapas y Nacionales) que tengan mejor información sustancial.
+4. REDACCIÓN: Toma el titular y la información disponible para redactar una nota informativa completa de 2 a 3 párrafos para el locutor.
+5. OMISIONES: Si hay menciones a EDUARDO RAMÍREZ, descártalas de inmediato.
+6. DIVERSIFICACIÓN: Selecciona máximo 1 o 2 notas por medio de comunicación.
 
-REGLAS STRICTAS Y MANDATORIAS:
-1. NUNCA ESCRIBAS "Nota no disponible en el contenido proporcionado", "Sin información" ni frases similares.
-2. SI UN MEDIO SOLO TIENE UN TITULAR O NO TIENE DETALLES, IGNÓRALO Y OMITELO POR COMPLETO. Solo incluye notas donde haya suficiente información para redactar una nota útil.
-3. MÁXIMO 1 O 2 NOTAS POR PORTAL para mantener variedad de fuentes.
-4. MANTIENE EL ESTILO PERIODÍSTICO: Desarrolla el qué, quién, cuándo, dónde y por qué con la información disponible.
-5. OMISIONES: Si hay información sobre EDUARDO RAMÍREZ, OMITIRLA por completo.
-6. FECHAS: Solo noticias de ${fechaAyer} a ${fechaHoy}.
-
-FORMATO PARA CADA NOTA:
-[Fuente] | [Fecha]
+FORMATO PERMITIDO ÚNICAMENTE:
+[Nombre del Portal] | [Fecha]
 [TÍTULO EN MAYÚSCULAS]
-[Redacción periodística amplia de la nota, lista para leer en voz alta en cabina]
+[Texto redactado de la noticia en 2 o 3 párrafos listos para lectura]
 
 ════════════════════════════════════════
-BLOQUE 2 — NOTICIAS CHIAPAS
-════════════════════════════════════════
+NOTICIAS EXTRAÍDAS DE CHIAPAS:
 ${seccionChiapas}
 
 ════════════════════════════════════════
-BLOQUE 3 — NOTICIAS NACIONALES
-════════════════════════════════════════
+NOTICIAS EXTRAÍDAS NACIONALES:
 ${seccionNacionales}`;
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un jefe de redacción de un noticiero de radio. Tu trabajo es tomar la información de los portales y redactar noticias completas y profesionales para el locutor. Jamás pones notas vacías o con leyendas de error.' },
+        { 
+          role: 'system', 
+          content: 'Eres el productor ejecutivo del noticiero de radio. Tu única tarea es entregar un guión limpio con notas redactadas para aire. Está prohibido escribir frases como "nota no disponible", "sin contenido" o dejar titulares sueltos. Si no hay datos de una nota, la ignoras por completo.' 
+        },
         { role: 'user', content: promptOriginal }
       ],
-      temperature: 0.2,
+      temperature: 0.3, // Elevado ligeramente para permitir que la IA redacte fluidamente con el contexto existente
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ exito: true, guion: `GUION INFORMATIVO INTEGRAL\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content });
+    res.json({ 
+      exito: true, 
+      guion: `GUION INFORMATIVO EXTENSO DE CABINA\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+    });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar guion original.', detalle: error.message });
   }
