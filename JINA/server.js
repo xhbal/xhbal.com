@@ -20,7 +20,8 @@ function getFechaFormateada() {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
+    hour12: true,
+    timeZone: 'America/Mexico_City' // Forzar hora local de México
   };
   return new Date().toLocaleDateString('es-MX', opciones);
 }
@@ -32,11 +33,14 @@ function getFechasFiltro() {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "America/Mexico_City"
   });
-  const fechaHoy = ahora.toISOString().split("T")[0];
-  const fechaAyer = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const fechaHoy = ahora.toLocaleDateString("sv-SE", { timeZone: "America/Mexico_City" }); // Formato YYYY-MM-DD local
+  const fechaAyer = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
+  fechaAyer.setDate(fechaAyer.getDate() - 2);
+  const fechaAyerStr = fechaAyer.toISOString().split("T")[0];
 
-  return { hoy, fechaHoy, fechaAyer };
+  return { hoy, fechaHoy, fechaAyer: fechaAyerStr };
 }
 
 async function limpiarConJina(url, timeoutMs = 15000) {
