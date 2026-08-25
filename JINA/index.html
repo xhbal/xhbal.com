@@ -109,7 +109,7 @@
       width: 0%;
       height: 100%;
       background: linear-gradient(90deg, var(--primary), var(--secondary));
-      transition: width 0.3s ease;
+      transition: width 0.4s ease;
     }
 
     .guion-box {
@@ -183,38 +183,64 @@
       document.getElementById("statusText").innerText = mensaje;
     }
 
-    function generarGuion() {
+    async function generarGuion() {
       const btn = document.getElementById("btnGenerar");
       const progressBox = document.getElementById("progressBox");
       const contenedor = document.getElementById("guionContenido");
 
       btn.disabled = true;
       progressBox.style.display = "block";
-      contenedor.innerText = "Procesando la información en tiempo real...";
+      contenedor.innerText = "Procesando la información en tiempo real con DeepSeek...";
       contenedor.contentEditable = "false";
       document.getElementById("btnEditar").innerText = "Editar";
-      actualizarProgreso(0, "Conectando con el servidor...");
 
-      const eventSource = new EventSource("/api/generar-guion-stream");
+      actualizarProgreso(15, "Enviando solicitud al servidor...");
 
-      eventSource.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        actualizarProgreso(data.porcentaje, data.mensaje);
-
-        if (data.completo) {
-          contenedor.innerText = data.guion;
-          eventSource.close();
-          btn.disabled = false;
+      // Simulación visual de avance mientras la API de DeepSeek procesa los textos
+      let progreso = 15;
+      const intervaloProgreso = setInterval(() => {
+        if (progreso < 85) {
+          progreso += 5;
+          let estado = "Redactando bloques de noticias...";
+          if (progreso > 50) estado = "Aplicando formato para radio comercial...";
+          actualizarProgreso(progreso, estado);
         }
-      };
+      }, 1500);
 
-      eventSource.onerror = function(err) {
-        console.error("Error SSE:", err);
-        actualizarProgreso(100, "Error de conexión con el servidor");
-        contenedor.innerText = "Ocurrió un error al generar el guión. Por favor intenta de nuevo.";
-        eventSource.close();
+      try {
+        const response = await fetch('/api/generar-noticiero', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            seccionLocal: '',
+            seccionChiapas: '',
+            seccionNacionales: ''
+          })
+        });
+
+        clearInterval(intervaloProgreso);
+
+        const data = await response.json();
+
+        if (response.ok && data.exito) {
+          actualizarProgreso(100, "¡Guión generado con éxito!");
+          contenedor.innerText = data.guion;
+        } else {
+          actualizarProgreso(100, "Error en la generación");
+          contenedor.innerText = "Error: " + (data.error || "No se pudo generar el guión de noticias.");
+          console.error("Detalle del error:", data.detalle);
+        }
+
+      } catch (error) {
+        clearInterval(intervaloProgreso);
+        console.error("Error al conectar con la API:", error);
+        actualizarProgreso(100, "Error de conexión");
+        contenedor.innerText = "Error de conexión con el servidor. Revisa si el backend está activo.";
+      } finally {
         btn.disabled = false;
-      };
+      }
     }
 
     // Función para activar o desactivar la edición sobre el área del texto
