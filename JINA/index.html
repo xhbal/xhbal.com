@@ -3,138 +3,120 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generador de Guiones de Noticiero - Radio</title>
+  <title>Generador de Guiones - XHBAL Latitud 93.5 FM</title>
   <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #1e40af;
+      --accent: #0284c7;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #cbd5e1;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
 
     body {
-      background-color: #f4f6f9;
-      color: #333;
-      display: flex;
-      justify-content: center;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
       padding: 20px;
     }
 
     .container {
-      width: 100%;
       max-width: 900px;
-      background: #ffffff;
-      padding: 30px;
+      margin: 0 auto;
+      background: var(--card-bg);
       border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      padding: 30px;
     }
 
     header {
       text-align: center;
       margin-bottom: 25px;
-      border-bottom: 2px solid #eef2f5;
+      border-bottom: 2px solid #e2e8f0;
       padding-bottom: 15px;
     }
 
-    h1 {
+    header h1 {
+      color: var(--primary);
       font-size: 24px;
-      color: #1a252f;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
 
-    p.subtitulo {
+    header p {
+      color: var(--text-muted);
       font-size: 14px;
-      color: #666;
     }
 
-    .panel-acciones {
-      display: flex;
-      flex-wrap: wrap;
+    .panel-botones {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
       margin-bottom: 25px;
-      justify-content: center;
     }
 
-    .btn {
-      flex: 1;
-      min-width: 220px;
-      padding: 14px 20px;
+    button {
+      background-color: var(--primary);
+      color: white;
       border: none;
+      padding: 12px 16px;
       border-radius: 8px;
-      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background-color 0.2s, transform 0.1s;
+      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      color: #ffffff;
     }
 
-    .btn-editado {
-      background-color: #2e7d32;
+    button:hover {
+      background-color: var(--primary-hover);
     }
 
-    .btn-editado:hover {
-      background-color: #1b5e20;
+    button:active {
+      transform: scale(0.98);
     }
 
-    .btn-original {
-      background-color: #1565c0;
-    }
-
-    .btn-original:hover {
-      background-color: #0d47a1;
-    }
-
-    .btn-sintesis {
-      background-color: #e65100;
-    }
-
-    .btn-sintesis:hover {
-      background-color: #bf360c;
-    }
-
-    .btn-enlaces {
-      background-color: #6a1b9a;
-    }
-
-    .btn-enlaces:hover {
-      background-color: #4a148c;
-    }
-
-    .btn-copiar {
-      background-color: #424242;
-      display: none;
-      flex: 100%;
-    }
-
-    .btn-copiar:hover {
-      background-color: #212121;
-    }
-
-    .btn:disabled {
-      background-color: #b0bec5;
+    button:disabled {
+      background-color: var(--border);
       cursor: not-allowed;
+    }
+
+    .btn-opcion-4 {
+      background-color: #0d9488;
+    }
+    .btn-opcion-4:hover {
+      background-color: #0f766e;
     }
 
     #loading {
       display: none;
       text-align: center;
-      padding: 20px;
-      font-size: 16px;
-      color: #555;
+      padding: 30px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
     .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #1565c0;
+      border: 4px solid #e2e8f0;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      width: 35px;
-      height: 35px;
+      border-left-color: var(--accent);
       animation: spin 1s linear infinite;
-      margin: 0 auto 12px auto;
+      margin: 0 auto 15px auto;
     }
 
     @keyframes spin {
@@ -142,116 +124,262 @@
       100% { transform: rotate(360deg); }
     }
 
-    .contenedor-resultado {
-      position: relative;
+    .resultado-container {
+      margin-top: 20px;
+    }
+
+    .resultado-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .resultado-header h3 {
+      font-size: 16px;
+      color: var(--primary);
     }
 
     textarea {
       width: 100%;
-      height: 550px;
-      padding: 18px;
-      border: 1px solid #cfd8dc;
+      height: 450px;
+      padding: 15px;
+      border: 1px solid var(--border);
       border-radius: 8px;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 15px;
-      line-height: 1.5;
-      background-color: #fafafa;
-      color: #1a252f;
+      font-size: 14px;
+      background-color: #fff;
       resize: vertical;
-      white-space: pre-wrap;
+      line-height: 1.5;
     }
 
-    textarea:focus {
-      outline: none;
-      border-color: #1565c0;
-      box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+    /* Contenedor especial visual para la Opción 4 con botones directos */
+    #contenedorOpcion4 {
+      display: none;
+      width: 100%;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: #fff;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .tarjeta-noticia {
+      background: #f8fafc;
+      border-left: 4px solid #0d9488;
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .btn-enlace-individual {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background-color: #0284c7;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-enlace-individual:hover {
+      background-color: #0369a1;
     }
 
     .alerta {
       padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      display: none;
+      border-radius: 8px;
+      margin-bottom: 20px;
       font-size: 14px;
+      display: none;
     }
+    .alerta.exito { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alerta.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
-    .alerta-exito {
-      background-color: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
+    .btn-secundario {
+      background-color: #475569;
+      font-size: 13px;
+      padding: 6px 12px;
+      width: auto;
     }
-
-    .alerta-error {
-      background-color: #ffebee;
-      color: #c62828;
-      border: 1px solid #ffcdd2;
-    }
+    .btn-secundario:hover { background-color: #334155; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <header>
-      <h1>Generador de Guiones de Noticiero</h1>
-      <p class="subtitulo">Sistema de extracción y procesamiento de noticias para locución en radio</p>
+      <h1>XHBAL - Latitud 93.5 FM</h1>
+      <p>Panel de automatización y redacción de noticias con Inteligencia Artificial</p>
     </header>
-
-    <div class="panel-acciones">
-      <button id="btnEditado" class="btn btn-editado" onclick="solicitarGuion('/api/generar-noticiero')">
-        📄 Generar Guión Editado
-      </button>
-
-      <button id="btnOriginal" class="btn btn-original" onclick="solicitarGuion('/api/generar-guion-original')">
-        📰 Generar Guión Original
-      </button>
-
-      <button id="btnSintesis" class="btn btn-sintesis" onclick="solicitarGuion('/api/sintesis-prensa')">
-        📊 Síntesis de Prensa
-      </button>
-
-      <!-- Nuevo Botón para Opción 4 -->
-      <button id="btnEnlaces" class="btn btn-enlaces" onclick="solicitarGuion('/api/sintesis-con-enlaces')">
-        🔗 Síntesis con Enlaces
-      </button>
-
-      <button id="btnCopiar" class="btn btn-copiar" onclick="copiarAlPortapapeles()">
-        📋 Copiar Contenido
-      </button>
-    </div>
 
     <div id="alerta" class="alerta"></div>
 
-    <div id="loading">
-      <div class="spinner"></div>
-      <p id="loadingTexto">Raspando portales de noticias y estructurando el contenido...</p>
-      <small style="color: #777;">Este proceso puede tomar entre 30 y 60 segundos.</small>
+    <!-- Botones de Opciones -->
+    <div class="panel-botones">
+      <button id="btnEditado" onclick="solicitarGuion('/api/generar-noticiero', false)">
+        📋 Guión Editado
+      </button>
+      <button id="btnOriginal" onclick="solicitarGuion('/api/generar-guion-original', false)">
+        🎙️ Guión Extenso
+      </button>
+      <button id="btnSintesis" onclick="solicitarGuion('/api/sintesis-prensa', false)">
+        📰 Síntesis de Prensa
+      </button>
+      <button id="btnEnlaces" class="btn-opcion-4" onclick="solicitarGuion('/api/sintesis-con-enlaces', true)">
+        🔗 Síntesis con Enlaces
+      </button>
     </div>
 
-    <div class="contenedor-resultado">
-      <textarea id="salidaGuion" placeholder="El contenido generado aparecerá en esta área listo para lectura o edición..." readonly></textarea>
+    <!-- Indicador de Carga con Barra de Porcentaje (1% - 100%) -->
+    <div id="loading">
+      <div class="spinner"></div>
+      <p id="loadingTexto" style="font-weight: 600; color: var(--primary);">Conectando con portales y analizando contenido...</p>
+      
+      <div style="width: 100%; max-width: 350px; background-color: #e2e8f0; border-radius: 8px; margin: 12px auto; overflow: hidden; height: 16px;">
+        <div id="barraProgreso" style="width: 0%; height: 100%; background-color: var(--accent); transition: width 0.4s ease-in-out; border-radius: 8px;"></div>
+      </div>
+      <p id="textoPorcentaje" style="font-weight: bold; color: var(--accent); font-size: 15px;">0%</p>
+
+      <small style="color: var(--text-muted); display: block; margin-top: 6px;">Este proceso toma entre 30 y 60 segundos debido al scraping masivo.</small>
+    </div>
+
+    <!-- Sección de Resultados -->
+    <div class="resultado-container">
+      <div class="resultado-header">
+        <h3 id="tituloResultado">Resultado Generado</h3>
+        <button id="btnCopiar" class="btn-secundario" style="display: none;" onclick="copiarAlPortapapeles()">
+          📋 Copiar Texto
+        </button>
+      </div>
+
+      <!-- Cuadro de texto tradicional para las opciones 1, 2 y 3 -->
+      <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
+
+      <!-- Contenedor visual enriquecido exclusivo para la Opción 4 (Botones individuales por nota) -->
+      <div id="contenedorOpcion4"></div>
     </div>
   </div>
 
   <script>
-    async function solicitarGuion(endpoint) {
+    function mostrarAlerta(mensaje, tipo) {
+      const alerta = document.getElementById('alerta');
+      alerta.className = `alerta ${tipo}`;
+      alerta.textContent = mensaje;
+      alerta.style.display = 'block';
+    }
+
+    function copiarAlPortapapeles() {
+      const salida = document.getElementById('salidaGuion');
+      salida.select();
+      document.execCommand('copy');
+      mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
+    }
+
+    // Función avanzada para formatear la Opción 4 en tarjetas con botón individual
+    function renderizarOpcion4ConBotones(textoGuion) {
+      const contenedor = document.getElementById('contenedorOpcion4');
+      contenedor.innerHTML = '';
+
+      // Separar por saltos de línea para estructurar
+      const lineas = textoGuion.split('\n');
+      let htmlAcumulado = '';
+      let tituloActual = '';
+      let enlaceActual = '';
+      let extractoActual = '';
+      let portalActual = '';
+
+      lineas.forEach(linea => {
+        linea = linea.trim();
+        if (linea.includes('|') && !linea.startsWith('-')) {
+          portalActual = linea;
+        } else if (linea.startsWith('- TÍTULO:') || linea.startsWith('TÍTULO:')) {
+          tituloActual = linea.replace(/^-?\s*TÍTULO:\s*/, '');
+        } else if (linea.startsWith('ENLACE:')) {
+          enlaceActual = linea.replace('ENLACE:', '').trim();
+        } else if (linea.startsWith('EXTRACTO:')) {
+          extractoActual = linea.replace('EXTRACTO:', '').trim();
+          
+          // Al tener los datos mínimos, armamos la tarjeta visual
+          if (tituloActual) {
+            htmlAcumulado += `
+              <div class="tarjeta-noticia">
+                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">${portalActual}</small>
+                <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${tituloActual}</h4>
+                <p style="font-size: 13px; color: #334155; margin-bottom: 6px;">${extractoActual}</p>
+                ${enlaceActual ? `<a href="${enlaceActual}" target="_blank" class="btn-enlace-individual">🔗 Leer noticia completa</a>` : ''}
+              </div>
+            `;
+            tituloActual = ''; enlaceActual = ''; extractoActual = '';
+          }
+        }
+      });
+
+      // Si el formato de texto fue libre, respaldo general con autodetectador de URLs
+      if (htmlAcumulado === '') {
+        contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
+      } else {
+        contenedor.innerHTML = `<h3 style="margin-bottom: 12px; color: #0f766e;">Monitoreo con Enlaces Directos</h3>` + htmlAcumulado;
+      }
+    }
+
+    async function solicitarGuion(endpoint, esOpcion4) {
       const btnEditado = document.getElementById('btnEditado');
       const btnOriginal = document.getElementById('btnOriginal');
       const btnSintesis = document.getElementById('btnSintesis');
       const btnEnlaces = document.getElementById('btnEnlaces');
       const btnCopiar = document.getElementById('btnCopiar');
+      
       const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
+      const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
       const alerta = document.getElementById('alerta');
 
-      // Interfaz en estado de carga
+      const barraProgreso = document.getElementById('barraProgreso');
+      const textoPorcentaje = document.getElementById('textoPorcentaje');
+      const loadingTexto = document.getElementById('loadingTexto');
+
+      // Deshabilitar botones durante proceso
       btnEditado.disabled = true;
       btnOriginal.disabled = true;
       btnSintesis.disabled = true;
       btnEnlaces.disabled = true;
+
       loading.style.display = 'block';
       alerta.style.display = 'none';
-      salidaGuion.value = '';
+      salidaGuion.style.display = 'none';
+      contenedorOpcion4.style.display = 'none';
       btnCopiar.style.display = 'none';
+
+      // Simulación de avance del contador de 1 a 90%
+      let porcentajeActual = 0;
+      barraProgreso.style.width = '0%';
+      textoPorcentaje.innerText = '0%';
+      loadingTexto.innerText = 'Iniciando conexión con los portales de noticias...';
+
+      const intervaloProgreso = setInterval(() => {
+        if (porcentajeActual < 90) {
+          const incremento = Math.max(1, Math.floor((90 - porcentajeActual) / 12));
+          porcentajeActual += incremento;
+          
+          barraProgreso.style.width = porcentajeActual + '%';
+          textoPorcentaje.innerText = porcentajeActual + '%';
+
+          if (porcentajeActual > 25 && porcentajeActual < 60) {
+            loadingTexto.innerText = 'Extrayendo y limpiando contenidos con Jina Reader...';
+          } else if (porcentajeActual >= 60) {
+            loadingTexto.innerText = 'Procesando y redactando con Inteligencia Artificial...';
+          }
+        }
+      }, 450);
 
       try {
         const response = await fetch(endpoint, {
@@ -263,53 +391,40 @@
 
         const data = await response.json();
 
+        // Al recibir respuesta completamos al 100%
+        clearInterval(intervaloProgreso);
+        barraProgreso.style.width = '100%';
+        textoPorcentaje.innerText = '100%';
+        loadingTexto.innerText = '¡Proceso completado con éxito!';
+
         if (data.exito) {
-          salidaGuion.value = data.guion;
-          salidaGuion.removeAttribute('readonly'); // Permitir que el usuario edite si quiere
+          if (esOpcion4) {
+            contenedorOpcion4.style.display = 'block';
+            renderizarOpcion4ConBotones(data.guion);
+            salidaGuion.value = data.guion; // Guardado por si acaso
+          } else {
+            salidaGuion.style.display = 'block';
+            salidaGuion.value = data.guion;
+          }
           btnCopiar.style.display = 'flex';
-          mostrarAlerta('Contenido generado con éxito.', 'exito');
+          mostrarAlerta('Contenido generado correctamente.', 'exito');
         } else {
           mostrarAlerta(`Error: ${data.error || 'No se pudo procesar la solicitud.'}`, 'error');
         }
 
       } catch (error) {
-        console.error('Error en la petición:', error);
-        mostrarAlerta('Error de conexión con el servidor. Inténtalo de nuevo.', 'error');
+        clearInterval(intervaloProgreso);
+        console.error('Error:', error);
+        mostrarAlerta('Error de conexión con el servidor local.', 'error');
       } finally {
-        btnEditado.disabled = false;
-        btnOriginal.disabled = false;
-        btnSintesis.disabled = false;
-        btnEnlaces.disabled = false;
-        loading.style.display = 'none';
+        setTimeout(() => {
+          btnEditado.disabled = false;
+          btnOriginal.disabled = false;
+          btnSintesis.disabled = false;
+          btnEnlaces.disabled = false;
+          loading.style.display = 'none';
+        }, 800);
       }
-    }
-
-    function copiarAlPortapapeles() {
-      const salidaGuion = document.getElementById('salidaGuion');
-      
-      if (!salidaGuion.value) return;
-
-      salidaGuion.select();
-      salidaGuion.setSelectionRange(0, 99999); // Para móviles
-
-      navigator.clipboard.writeText(salidaGuion.value)
-        .then(() => {
-          mostrarAlerta('¡Contenido copiado al portapapeles!', 'exito');
-        })
-        .catch(err => {
-          mostrarAlerta('No se pudo copiar automáticamente.', 'error');
-        });
-    }
-
-    function mostrarAlerta(mensaje, tipo) {
-      const alerta = document.getElementById('alerta');
-      alerta.innerText = mensaje;
-      alerta.className = `alerta alerta-${tipo}`;
-      alerta.style.display = 'block';
-
-      setTimeout(() => {
-        alerta.style.display = 'none';
-      }, 4000);
     }
   </script>
 </body>
