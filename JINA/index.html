@@ -26,8 +26,8 @@
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      line-height: 1.5;
-      padding: 15px;
+      line-height: 1.4;
+      padding: 10px;
     }
 
     .container {
@@ -35,51 +35,51 @@
       max-width: 100%;
       margin: 0 auto;
       background: var(--card-bg);
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      padding: 15px;
     }
 
     header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
+      padding-bottom: 10px;
     }
 
     header h1 {
       color: var(--primary);
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     header p {
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .panel-botones {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-bottom: 15px;
     }
 
     button {
       background-color: var(--primary);
       color: white;
       border: none;
-      padding: 10px 14px;
-      border-radius: 6px;
+      padding: 8px 12px;
+      border-radius: 4px;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s;
-      font-size: 13px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 5px;
     }
 
     button:hover {
@@ -102,21 +102,21 @@
     #loading {
       display: none;
       text-align: center;
-      padding: 20px;
+      padding: 15px;
       background: #f8fafc;
-      border-radius: 6px;
-      margin-bottom: 15px;
+      border-radius: 4px;
+      margin-bottom: 10px;
       border: 1px dashed var(--border);
     }
 
     .spinner {
-      border: 3px solid var(--border);
-      width: 30px;
-      height: 30px;
+      border: 2px solid var(--border);
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       border-left-color: var(--accent);
       animation: spin 1s linear infinite;
-      margin: 0 auto 10px auto;
+      margin: 0 auto 6px auto;
     }
 
     @keyframes spin {
@@ -125,32 +125,31 @@
     }
 
     .resultado-container {
-      margin-top: 15px;
+      margin-top: 10px;
     }
 
     .resultado-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .resultado-header h3 {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--primary);
       font-weight: 600;
     }
 
     textarea {
       width: 100%;
-      height: 500px;
-      padding: 15px;
+      height: 400px;
+      padding: 10px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
+      border-radius: 4px;
+      font-size: 12px;
       background-color: #fafafa;
       resize: vertical;
-      line-height: 1.5;
     }
 
     #contenedorOpcion4 {
@@ -158,75 +157,71 @@
       width: 100%;
     }
 
-    /* Estilo de lista compacta continua sin espacios muertos */
-    .grupo-portal {
-      margin-bottom: 15px;
+    /* Listado plano y continuo sin cajas ni espacios grandes */
+    .bloque-medio {
+      margin-bottom: 12px;
       border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
+      padding-bottom: 8px;
     }
 
-    .grupo-portal:last-child {
+    .bloque-medio:last-child {
       border-bottom: none;
+      margin-bottom: 0;
     }
 
     .badge-portal {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       color: #0f766e;
       background: #f0fdfa;
-      padding: 3px 10px;
-      border-radius: 4px;
+      padding: 2px 6px;
+      border-radius: 3px;
       text-transform: uppercase;
       border: 1px solid #ccfbf1;
       display: inline-block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .item-nota {
+    .fila-nota {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 15px;
-      padding: 8px 0;
-      border-top: 1px dashed #f1f5f9;
+      gap: 12px;
+      padding: 4px 0;
     }
 
-    .item-nota:first-of-type {
-      border-top: none;
-    }
-
-    .contenido-nota {
+    .info-nota {
       flex: 1;
     }
 
     .titulo-noticia {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--primary);
       font-weight: 700;
-      line-height: 1.3;
-      margin-bottom: 3px;
+      line-height: 1.25;
+      margin-bottom: 2px;
     }
 
     .extracto-noticia {
-      font-size: 13px;
+      font-size: 12px;
       color: #475569;
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
     .btn-enlace-individual {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       background-color: #0284c7;
       color: white;
-      padding: 4px 10px;
-      border-radius: 4px;
+      padding: 3px 8px;
+      border-radius: 3px;
       text-decoration: none;
       font-size: 11px;
       font-weight: 600;
-      transition: background-color 0.2s;
       white-space: nowrap;
       margin-top: 2px;
+      transition: background-color 0.2s;
     }
 
     .btn-enlace-individual:hover {
@@ -234,10 +229,10 @@
     }
 
     .alerta {
-      padding: 10px 14px;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 12px;
       display: none;
       font-weight: 500;
     }
@@ -246,8 +241,8 @@
 
     .btn-secundario {
       background-color: #475569;
-      font-size: 12px;
-      padding: 6px 12px;
+      font-size: 11px;
+      padding: 4px 10px;
       width: auto;
     }
     .btn-secundario:hover { background-color: #334155; }
@@ -263,7 +258,6 @@
 
     <div id="alerta" class="alerta"></div>
 
-    <!-- Botones de Opciones -->
     <div class="panel-botones">
       <button id="btnEditado" onclick="solicitarGuion('/api/generar-noticiero', false)">
         📋 Guión Editado
@@ -279,18 +273,16 @@
       </button>
     </div>
 
-    <!-- Indicador de Carga -->
     <div id="loading">
       <div class="spinner"></div>
-      <p id="loadingTexto" style="font-weight: 600; color: var(--primary); font-size: 13px;">Conectando con portales y analizando contenido...</p>
+      <p id="loadingTexto" style="font-weight: 600; color: var(--primary); font-size: 12px;">Conectando con portales y analizando contenido...</p>
       
-      <div style="width: 100%; max-width: 300px; background-color: #e2e8f0; border-radius: 6px; margin: 8px auto; overflow: hidden; height: 12px;">
-        <div id="barraProgreso" style="width: 0%; height: 100%; background-color: var(--accent); transition: width 0.4s ease-in-out; border-radius: 6px;"></div>
+      <div style="width: 100%; max-width: 250px; background-color: #e2e8f0; border-radius: 4px; margin: 6px auto; overflow: hidden; height: 10px;">
+        <div id="barraProgreso" style="width: 0%; height: 100%; background-color: var(--accent); transition: width 0.4s ease-in-out; border-radius: 4px;"></div>
       </div>
-      <p id="textoPorcentaje" style="font-weight: bold; color: var(--accent); font-size: 13px;">0%</p>
+      <p id="textoPorcentaje" style="font-weight: bold; color: var(--accent); font-size: 12px;">0%</p>
     </div>
 
-    <!-- Sección de Resultados -->
     <div class="resultado-container">
       <div class="resultado-header">
         <h3 id="tituloResultado">Resultado Generado</h3>
@@ -301,7 +293,6 @@
 
       <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
       
-      <!-- Contenedor agrupado y compacto -->
       <div id="contenedorOpcion4"></div>
     </div>
   </div>
@@ -321,7 +312,6 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    // Agrupa automáticamente por portal para que el medio aparezca una sola vez
     function renderizarOpcion4ConBotones(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
@@ -372,11 +362,11 @@
       });
       guardarNotaActual();
 
-      let htmlAcumulado = `<h3 style="margin-bottom: 12px; color: #0f766e; font-size: 15px;">Monitoreo de Noticias Organizado por Medio</h3>`;
+      let htmlAcumulado = `<h3 style="margin-bottom: 8px; color: #0f766e; font-size: 14px;">Monitoreo de Noticias Organizado por Medio</h3>`;
 
       for (const [portal, notas] of Object.entries(notasPorPortal)) {
         htmlAcumulado += `
-          <div class="grupo-portal">
+          <div class="bloque-medio">
             <span class="badge-portal">📡 ${portal}</span>
         `;
 
@@ -390,10 +380,10 @@
           }
 
           htmlAcumulado += `
-            <div class="item-nota">
-              <div class="contenido-nota">
-                <h4 class="titulo-noticia">${nota.titulo}</h4>
-                <p class="extracto-noticia">${nota.extracto}</p>
+            <div class="fila-nota">
+              <div class="info-nota">
+                <div class="titulo-noticia">${nota.titulo}</div>
+                <div class="extracto-noticia">${nota.extracto}</div>
               </div>
               <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
                 🔗 Leer nota
@@ -453,9 +443,9 @@
           textoPorcentaje.innerText = porcentajeActual + '%';
 
           if (porcentajeActual > 25 && porcentajeActual < 60) {
-            loadingTexto.innerText = 'Extrayendo y limpiando contenidos con Jina Reader...';
+            loadingTexto.innerText = 'Extrayendo y limpiando contenidos...';
           } else if (porcentajeActual >= 60) {
-            loadingTexto.innerText = 'Procesando y redactando con IA...';
+            loadingTexto.innerText = 'Procesando y redactando...';
           }
         }
       }, 450);
@@ -463,9 +453,7 @@
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Content-Type': 'application/json' }
         });
 
         const data = await response.json();
