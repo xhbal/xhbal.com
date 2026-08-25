@@ -9,7 +9,7 @@
       --primary: #1e3a8a;
       --primary-hover: #1e40af;
       --accent: #0284c7;
-      --bg-color: #f1f5f9;
+      --bg-color: #f8fafc;
       --card-bg: #ffffff;
       --text-main: #1e293b;
       --text-muted: #64748b;
@@ -26,82 +26,75 @@
     body {
       background-color: var(--bg-color);
       color: var(--text-main);
-      line-height: 1.6;
-      padding: 30px 15px;
+      line-height: 1.5;
+      padding: 15px;
     }
 
+    /* Contenedor que ocupa todo el ancho de la página */
     .container {
-      max-width: 950px;
+      width: 100%;
+      max-width: 100%;
       margin: 0 auto;
       background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-      padding: 35px;
-      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 20px;
     }
 
     header {
       text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
     }
 
     header h1 {
       color: var(--primary);
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     header p {
       color: var(--text-muted);
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .panel-botones {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 14px;
-      margin-bottom: 25px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     button {
       background-color: var(--primary);
       color: white;
       border: none;
-      padding: 14px 18px;
-      border-radius: 10px;
+      padding: 10px 14px;
+      border-radius: 6px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 14px;
+      transition: background-color 0.2s;
+      font-size: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
+      gap: 6px;
     }
 
     button:hover {
       background-color: var(--primary-hover);
-      transform: translateY(-1px);
-    }
-
-    button:active {
-      transform: translateY(0);
     }
 
     button:disabled {
       background-color: var(--border);
       color: var(--text-muted);
       cursor: not-allowed;
-      box-shadow: none;
     }
 
     .btn-opcion-4 {
       background-color: #0d9488;
-      box-shadow: 0 2px 4px rgba(13, 148, 136, 0.2);
     }
     .btn-opcion-4:hover {
       background-color: #0f766e;
@@ -110,21 +103,21 @@
     #loading {
       display: none;
       text-align: center;
-      padding: 35px;
+      padding: 20px;
       background: #f8fafc;
-      border-radius: 12px;
-      margin-bottom: 20px;
+      border-radius: 6px;
+      margin-bottom: 15px;
       border: 1px dashed var(--border);
     }
 
     .spinner {
-      border: 4px solid var(--border);
-      width: 40px;
-      height: 40px;
+      border: 3px solid var(--border);
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border-left-color: var(--accent);
       animation: spin 1s linear infinite;
-      margin: 0 auto 15px auto;
+      margin: 0 auto 10px auto;
     }
 
     @keyframes spin {
@@ -133,18 +126,18 @@
     }
 
     .resultado-container {
-      margin-top: 25px;
+      margin-top: 15px;
     }
 
     .resultado-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
     }
 
     .resultado-header h3 {
-      font-size: 17px;
+      font-size: 15px;
       color: var(--primary);
       font-weight: 600;
     }
@@ -152,38 +145,39 @@
     textarea {
       width: 100%;
       height: 500px;
-      padding: 20px;
+      padding: 15px;
       border: 1px solid var(--border);
-      border-radius: 12px;
-      font-size: 14px;
+      border-radius: 6px;
+      font-size: 13px;
       background-color: #fafafa;
       resize: vertical;
-      line-height: 1.6;
-      color: var(--text-main);
+      line-height: 1.5;
     }
 
-    /* Contenedor visual moderno para la Opción 4 */
+    /* Contenedor de Opción 4 adaptado a ancho completo sin scroll interno */
     #contenedorOpcion4 {
       display: none;
       width: 100%;
-      max-height: 600px;
-      overflow-y: auto;
-      padding: 5px;
     }
 
+    /* Diseño en lista compacta, una tras otra */
     .tarjeta-noticia {
       background: #ffffff;
-      border: 1px solid var(--border);
-      border-left: 5px solid #0d9488;
-      padding: 18px 20px;
-      margin-bottom: 18px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-      transition: box-shadow 0.2s ease;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .tarjeta-noticia:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    .tarjeta-noticia:last-child {
+      border-bottom: none;
+    }
+
+    .tarjeta-header-fila {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .badge-portal {
@@ -191,53 +185,50 @@
       font-weight: 700;
       color: #0f766e;
       background: #f0fdfa;
-      padding: 4px 10px;
-      border-radius: 6px;
+      padding: 2px 8px;
+      border-radius: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: inline-block;
-      margin-bottom: 8px;
       border: 1px solid #ccfbf1;
     }
 
-    .titulo-noticia {
-      font-size: 16px;
-      color: var(--primary);
-      margin: 0 0 8px 0;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-
-    .extracto-noticia {
-      font-size: 14px;
-      color: #475569;
-      margin-bottom: 14px;
-      line-height: 1.5;
-    }
-
+    /* Botón alineado a la derecha */
     .btn-enlace-individual {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       background-color: #0284c7;
       color: white;
-      padding: 8px 14px;
-      border-radius: 8px;
+      padding: 5px 10px;
+      border-radius: 4px;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       transition: background-color 0.2s;
+      white-space: nowrap;
     }
 
     .btn-enlace-individual:hover {
       background-color: #0369a1;
     }
 
+    .titulo-noticia {
+      font-size: 17px;
+      color: var(--primary);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .extracto-noticia {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.4;
+    }
+
     .alerta {
-      padding: 14px 16px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 13px;
       display: none;
       font-weight: 500;
     }
@@ -246,10 +237,9 @@
 
     .btn-secundario {
       background-color: #475569;
-      font-size: 13px;
-      padding: 8px 14px;
+      font-size: 12px;
+      padding: 6px 12px;
       width: auto;
-      box-shadow: none;
     }
     .btn-secundario:hover { background-color: #334155; }
   </style>
@@ -280,17 +270,15 @@
       </button>
     </div>
 
-    <!-- Indicador de Carga con Barra de Porcentaje (1% - 100%) -->
+    <!-- Indicador de Carga -->
     <div id="loading">
       <div class="spinner"></div>
-      <p id="loadingTexto" style="font-weight: 600; color: var(--primary);">Conectando con portales y analizando contenido...</p>
+      <p id="loadingTexto" style="font-weight: 600; color: var(--primary); font-size: 13px;">Conectando con portales y analizando contenido...</p>
       
-      <div style="width: 100%; max-width: 350px; background-color: #e2e8f0; border-radius: 8px; margin: 12px auto; overflow: hidden; height: 16px;">
-        <div id="barraProgreso" style="width: 0%; height: 100%; background-color: var(--accent); transition: width 0.4s ease-in-out; border-radius: 8px;"></div>
+      <div style="width: 100%; max-width: 300px; background-color: #e2e8f0; border-radius: 6px; margin: 8px auto; overflow: hidden; height: 12px;">
+        <div id="barraProgreso" style="width: 0%; height: 100%; background-color: var(--accent); transition: width 0.4s ease-in-out; border-radius: 6px;"></div>
       </div>
-      <p id="textoPorcentaje" style="font-weight: bold; color: var(--accent); font-size: 15px;">0%</p>
-
-      <small style="color: var(--text-muted); display: block; margin-top: 6px;">Este proceso toma entre 30 y 60 segundos debido al scraping masivo.</small>
+      <p id="textoPorcentaje" style="font-weight: bold; color: var(--accent); font-size: 13px;">0%</p>
     </div>
 
     <!-- Sección de Resultados -->
@@ -302,10 +290,10 @@
         </button>
       </div>
 
-      <!-- Cuadro de texto tradicional para las opciones 1, 2 y 3 -->
+      <!-- Cuadro de texto tradicional para opciones 1, 2 y 3 -->
       <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
 
-      <!-- Contenedor visual enriquecido exclusivo para la Opción 4 con tarjetas y botones independientes -->
+      <!-- Contenedor de Opción 4 en lista vertical continua de ancho completo -->
       <div id="contenedorOpcion4"></div>
     </div>
   </div>
@@ -325,7 +313,6 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    // Función que procesa dinámicamente el formato de etiquetas estrictas de la Opción 4
     function renderizarOpcion4ConBotones(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
@@ -369,7 +356,7 @@
       if (htmlAcumulado === '') {
         contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
       } else {
-        contenedor.innerHTML = `<h3 style="margin-bottom: 15px; color: #0f766e; font-size: 16px;">Monitoreo de Noticias con Enlaces Directos</h3>` + htmlAcumulado;
+        contenedor.innerHTML = `<h3 style="margin-bottom: 8px; color: #0f766e; font-size: 15px;">Monitoreo de Noticias con Enlaces Directos</h3>` + htmlAcumulado;
       }
     }
 
@@ -384,12 +371,14 @@
 
       return `
         <div class="tarjeta-noticia">
-          <div><span class="badge-portal">📡 ${portal.replace(/[\[\]]/g, '')}</span></div>
+          <div class="tarjeta-header-fila">
+            <span class="badge-portal">📡 ${portal.replace(/[\[\]]/g, '')}</span>
+            <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
+              🔗 Leer noticia completa
+            </a>
+          </div>
           <h4 class="titulo-noticia">${titulo.replace(/[\[\]]/g, '').replace(/^[•\-\*]\s*/, '')}</h4>
           <p class="extracto-noticia">${extracto.replace(/[\[\]]/g, '').trim()}</p>
-          <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
-            🔗 Leer noticia completa
-          </a>
         </div>
       `;
     }
@@ -410,7 +399,6 @@
       const textoPorcentaje = document.getElementById('textoPorcentaje');
       const loadingTexto = document.getElementById('loadingTexto');
 
-      // Deshabilitar botones durante proceso
       btnEditado.disabled = true;
       btnOriginal.disabled = true;
       btnSintesis.disabled = true;
@@ -462,7 +450,7 @@
           if (esOpcion4) {
             contenedorOpcion4.style.display = 'block';
             renderizarOpcion4ConBotones(data.guion);
-            salidaGuion.value = data.guion; // Respaldo en textarea oculto
+            salidaGuion.value = data.guion;
           } else {
             salidaGuion.style.display = 'block';
             salidaGuion.value = data.guion;
