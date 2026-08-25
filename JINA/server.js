@@ -55,6 +55,9 @@ async function limpiarConJina(url, timeoutMs = 15000) {
     });
 
     const texto = response.data || "";
+    if (texto.length < 200) {
+      console.log(`⚠️ Advertencia: El portal ${url} devolvió muy poco contenido (posible bloqueo).`);
+    }
     return texto.substring(0, 4000); // Espacio suficiente para la nota íntegra
   } catch (error) {
     console.log(`⚠️ Error/Timeout al consultar ${url}:`, error.message);
@@ -66,7 +69,7 @@ async function obtenerContenidoPortales() {
   const portalesChiapas = [
     { nombre: "CUARTO PODER", url: "https://www.cuartopoder.mx" },
     { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/" },
-    { nombre: "DIARIO DE CHIAPAS", url: "https://www.diariodechiapas.com" },
+    { nombre: "DIARIO DE CHIAPAS", url: "https://www.diariodechiapas.com" }, // URL original intacta
     { nombre: "ALERTA CHIAPAS", url: "https://www.alertachiapas.com" },
     { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com" },
     { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
@@ -204,7 +207,7 @@ ${seccionNacionales}`;
       messages: [
         { 
           role: 'system', 
-          content: 'Eres el productor ejecutivo del noticiero de radio. Tu única tarea es entregar un guión limpio con notas redactadas para aire. Está prohibido escribir frases como "nota no disponible", "sin contenido" o dejar titulares sueltos. If no hay datos de una nota, la ignoras por completo.' 
+          content: 'Eres el productor ejecutivo del noticiero de radio. Tu única tarea es entregar un guión limpio con notas redactadas para aire. Está prohibido escribir frases como "nota no disponible", "sin contenido" o dejar titulares sueltos. Si no hay datos de una nota, la ignoras por completo.' 
         },
         { role: 'user', content: promptOriginal }
       ],
@@ -276,7 +279,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA (HTML)
+// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA (HTML) - DISEÑO RENOVADO
 // =========================================================
 app.post('/api/sintesis-con-enlaces', async (req, res) => {
   try {
@@ -318,13 +321,15 @@ ${seccionNacionales}`;
 
     const textoRespuesta = response.data.choices[0].message.content;
 
-    // Procesador automático para convertir el formato de DeepSeek en HTML con botones interactivos
     let htmlOutput = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b;">
-        <h2 style="color: #1e3a8a; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px;">
-          📰 SÍNTESIS DE PRENSA CON ENLACES INDIVIDUALES
-        </h2>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Generado el: ${fechaEmision}</p>
+      <div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; max-width: 900px; margin: 0 auto; padding: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px;">
+          <h2 style="color: #1e3a8a; margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
+            <span>📰</span> Síntesis de Prensa Interactiva
+          </h2>
+          <span style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-weight: 500;">${fechaEmision}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
     `;
 
     const bloques = textoRespuesta.split(/PORTAL:/i).filter(b => b.trim().length > 0);
@@ -345,19 +350,23 @@ ${seccionNacionales}`;
 
       if (titulo) {
         htmlOutput += `
-          <div style="margin-bottom: 15px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <span style="font-size: 11px; font-weight: bold; color: #0f766e; text-transform: uppercase; background: #f0fdfa; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px;">📡 ${portalNameCleaner(portalNombre)}</span>
-            <h4 style="font-size: 14px; color: #1e293b; margin: 4px 0 8px 0;">• ${titulo}</h4>
-            <p style="font-size: 13px; color: #475569; margin-bottom: 10px;">${extracto}</p>
-            <a href="${enlace.startsWith('http') ? enlace : 'https://' + enlace}" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; background-color: #0284c7; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; transition: background 0.2s;">
-              🔗 Leer noticia completa
-            </a>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; border-radius: 6px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 11px; font-weight: 700; color: #0f766e; text-transform: uppercase; background: #f0fdfa; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">📡 ${portalNameCleaner(portalNombre)}</span>
+            </div>
+            <h3 style="font-size: 15px; color: #1e293b; margin: 0 0 8px 0; font-weight: 600; line-height: 1.4;">${titulo}</h3>
+            <p style="font-size: 13px; color: #475569; margin: 0 0 12px 0; line-height: 1.5;">${extracto}</p>
+            <div>
+              <a href="${enlace.startsWith('http') ? enlace : 'https://' + enlace}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background-color: #0284c7; color: white; padding: 7px 14px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                <span>🔗</span> Leer noticia completa
+              </a>
+            </div>
           </div>
         `;
       }
     });
 
-    htmlOutput += `</div>`;
+    htmlOutput += `</div></div>`;
 
     res.json({ exito: true, guion: htmlOutput });
   } catch (error) {
