@@ -158,6 +158,22 @@
   </div>
 
   <script>
+    function obtenerNumeroGuionDia() {
+      const hoy = new Date().toISOString().split('T')[0];
+      const ultimoDia = localStorage.getItem('guion_fecha');
+      let contador = parseInt(localStorage.getItem('guion_contador') || '0', 10);
+
+      if (ultimoDia !== hoy) {
+        contador = 1;
+        localStorage.setItem('guion_fecha', hoy);
+      } else {
+        contador += 1;
+      }
+
+      localStorage.setItem('guion_contador', contador.toString());
+      return contador;
+    }
+
     function actualizarProgreso(porcentaje, mensaje) {
       document.getElementById("progressBar").style.width = porcentaje + "%";
       document.getElementById("percentageText").innerText = porcentaje + "%";
@@ -201,7 +217,12 @@
 
         if (response.ok && data.exito) {
           actualizarProgreso(100, "¡Guión generado con éxito!");
-          contenedor.innerText = data.guion;
+          
+          // Obtener el número correlativo del día
+          const numGuion = obtenerNumeroGuionDia();
+          const encabezadoConNumero = `GUIÓN #${numGuion} DEL DÍA\n${data.guion}`;
+          
+          contenedor.innerText = encabezadoConNumero;
         } else {
           actualizarProgreso(100, "Error en la respuesta");
           contenedor.innerText = `Error (${response.status}): ${data.error || 'No se pudo generar'}\nDetalle: ${data.detalle || ''}`;
