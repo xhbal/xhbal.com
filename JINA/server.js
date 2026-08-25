@@ -144,32 +144,15 @@ REGLAS:
 4. NUNCA repitas el mismo tema aunque venga de portales distintos.
 5. Formato simple y directo — sin textos de locutor, sin cortinillas, sin introducciones.
 6. SIEMPRE incluye la hora de publicación — si no aparece escribe "hora no disponible".
-7. PROHIBIDO escribir cualquier texto antes de la palabra EFEMÉRIDE — empieza directamente con "EFEMÉRIDE:" sin ningún análisis previo.
+7. PROHIBIDO escribir cualquier texto introductorio — empieza directamente con el primer bloque de noticias.
 8. NO repitas el encabezado — solo genera el contenido de los bloques.
 9. SOLO usa los portales de las listas proporcionadas — PROHIBIDO usar cualquier otro portal no listado.
 10. Si hay información de EDUARDO RAMÍREZ, OMITIRLA por completo.
 11. No omitir datos importantes de la nota como nombre, lugar y hecho.
-12. Queda strictly prohibido iniciar el cuerpo de la nota o utilizar frases dentro del texto como: 'De acuerdo con información publicada por...', 'El medio [Nombre] reporta que...', o 'Según lo publicado en...'.
+12. Queda estrictamente prohibido iniciar el cuerpo de la nota o utilizar frases dentro del texto como: 'De acuerdo con información publicada por...', 'El medio [Nombre] reporta que...', o 'Según lo publicado en...'.
 
 ════════════════════════════════════════
-BLOQUE 1 — EFEMÉRIDE MUSICAL
-════════════════════════════════════════ 
-Busca UN músico mexicano que haya nacido o fallecido el ${hoy}.
-Si no hay mexicanos busca de cualquier parte del mundo.
-Máximo 150 palabras. Incluye canción más popular.
-
-INSTRUCCIONES:
-- Al redactar una efeméride, queda estrictamente prohibido asumir por defecto que la fecha corresponde a un 'Natalicio' o 'Fallecimiento'. Debes verificar la naturaleza exacta del suceso histórico.
-
-Si el evento del día NO es un nacimiento ni una muerte, especifica claramente utilizando: DEBUT, LANZAMIENTO, ANIVERSARIO DE BANDA o HITO HISTÓRICO.
-
-Formato exacto:
-EFEMÉRIDE: [nombre del artista] — [efeméride]
-[texto de máximo 150 palabras]
-PROPUESTA MUSICAL: [canción]
-
-════════════════════════════════════════
-BLOQUE 2 — NOTICIAS LOCALES (San Cristóbal y zona Altos)
+BLOQUE 1 — NOTICIAS LOCALES (San Cristóbal y zona Altos)
 ════════════════════════════════════════
 ${seccionLocal}
 
@@ -179,7 +162,7 @@ Fuente: Redes Sociales | hora no disponible
 [Resumen 100 palabras, estilo periodístico]
 
 ════════════════════════════════════════
-BLOQUE 3 — NOTICIAS CHIAPAS (5 a 10 notas)
+BLOQUE 2 — NOTICIAS CHIAPAS (5 a 10 notas)
 ════════════════════════════════════════
 Aquí está el contenido actual de los portales de Chiapas:
 
@@ -199,7 +182,7 @@ Formato de cada nota:
 [Resumen 100 palabras, tercera persona, estilo periodístico]
 
 ════════════════════════════════════════
-BLOQUE 4 — NOTICIAS NACIONALES (10 notas)
+BLOQUE 3 — NOTICIAS NACIONALES (10 notas)
 ════════════════════════════════════════
 Aquí está el contenido actual de los portales nacionales:
 
