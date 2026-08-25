@@ -1,52 +1,107 @@
-// Función para raspar contenido de URLs usando Jina Reader
-async function obtenerContenidoJina(urls) {
-  let contenidoAcumulado = '';
-  for (const url of urls) {
-    try {
-      const response = await axios.get(`https://r.jina.ai/${url}`, { timeout: 15000 });
-      contenidoAcumulado += `\n--- FUENTE: ${url} ---\n` + response.data + '\n';
-    } catch (err) {
-      console.error(`Error al obtener ${url} via Jina:`, err.message);
-    }
-  }
-  return contenidoAcumulado;
+require('dotenv').config();
+
+const express = require('express');
+const axios = require('axios');
+const path = require('path');
+const cors = require('cors');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(__dirname));
+
+function getFechaFormateada() {
+  const opciones = {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  };
+  return new Date().toLocaleDateString('es-MX', opciones);
 }
 
-// Endpoint POST para la generación del guion
+function getFechasFiltro() {
+  const hoy = new Date();
+  const ayer = new Date(hoy);
+  ayer.setDate(hoy.getDate() - 1);
+
+  const format = (d) => d.toISOString().split('T')[0];
+  return {
+    fechaHoy: format(hoy),
+    fechaAyer: format(ayer),
+    hoyTexto: hoy.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })
+  };
+}
+
+// Extracción de portales web mediante Jina Reader
+async function obtenerNoticiasJina(urls) {
+  let contenido = '';
+  for (const url of urls) {
+    if (!url || url.includes('ejemplo.com')) continue;
+    try {
+      console.log(`Consultando Jina Reader para: ${url}`);
+      const response = await axios.get(`https://r.jina.ai/${url}`, {
+        timeout: 20000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      });
+      const texto = response.data || '';
+      console.log(`-> Éxito en ${url}: ${texto.length} caracteres extraídos.`);
+      contenido += `\n--- FUENTE: ${url} ---\n` + texto + '\n';
+    } catch (err) {
+      console.error(`-> Error al extraer ${url}:`, err.message);
+    }
+  }
+  return contenido;
+}
+
+// Health Check para Render
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// Endpoint principal
 app.post('/api/generar-noticiero', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
+      console.error('DEEPSEEK_API_KEY no configurada.');
       return res.status(500).json({
         exito: false,
-        error: 'La clave de API de DeepSeek no está configurada.'
+        error: 'La clave de API de DeepSeek no está configurada en Render.'
       });
     }
 
-    // 1. DEFINIR URLS POR SECCIÓN
+    // -------------------------------------------------------------
+    // CONFIGURA AQUÍ LAS URLS DE TUS PORTALES DE NOTICIAS
+    // -------------------------------------------------------------
     const urlsLocales = [
-      'https://ejemplo.com/local1',
-      'https://ejemplo.com/local2'
-    ];
-    const urlsChiapas = [
-      'https://ejemplo.com/chiapas1',
-      'https://ejemplo.com/chiapas2'
-    ];
-    const urlsNacionales = [
-      'https://ejemplo.com/nacional1',
-      'https://ejemplo.com/internacional1'
+      'https://www.diariodesanchristobal.com'
     ];
 
-    // 2. SCRAPING AUTOMÁTICO VÍA JINA READER
-    console.log('Obteniendo noticias desde los portales...');
-    const seccionLocal = await obtenerContenidoJina(urlsLocales);
-    const seccionChiapas = await obtenerContenidoJina(urlsChiapas);
-    const seccionNacionales = await obtenerContenidoJina(urlsNacionales);
+    const urlsChiapas = [
+      'https://www.elheraldodechiapas.com.mx/local/'
+    ];
+
+    const urlsNacionales = [
+      'https://www.eluniversal.com.mx/nacion/'
+    ];
+
+    console.log('Iniciando raspado de portales con Jina Reader...');
+    const seccionLocal = await obtenerNoticiasJina(urlsLocales);
+    const seccionChiapas = await obtenerNoticiasJina(urlsChiapas);
+    const seccionNacionales = await obtenerNoticiasJina(urlsNacionales);
 
     const { fechaHoy, fechaAyer, hoyTexto } = getFechasFiltro();
     const fechaEmision = getFechaFormateada();
 
-    // 3. ARMADO DEL PROMPT (usando las variables ya pobladas con Jina)
     const prompt = `Hoy es ${hoyTexto}. Fecha exacta: ${fechaHoy}.
 Rango de fechas aceptable para noticias: ${fechaAyer} a ${fechaHoy}.
 
@@ -121,6 +176,7 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
 
+    console.log('Enviando prompt consolidado a DeepSeek...');
     const response = await axios.post(
       apiUrl,
       {
@@ -128,7 +184,7 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
         messages: [
           {
             role: 'system',
-            content: 'Eres un editor y redactor de noticias para radio comercial. Tu trabajo es procesar extensamente el material entregado y generar un guión completo sin escatimar notas. Debes incluir al menos 3 a 4 notas en el Bloque 3 y al menos 5 a 7 notas en el Bloque 4 siempre que haya material disponible.'
+            content: 'Eres un editor y redactor de noticias para radio comercial. Tu trabajo es procesar extensamente el material entregado y generar un guión completo sin escatimar notas.'
           },
           {
             role: 'user',
@@ -166,4 +222,13 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
       detalle: typeof detalleError === 'object' ? JSON.stringify(detalleError) : detalleError
     });
   }
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const HOST = '0.0.0.0';
+app.listen(port, HOST, () => {
+  console.log(`Servidor de Guiones activo en el puerto ${port}`);
 });
