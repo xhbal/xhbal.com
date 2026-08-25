@@ -278,3 +278,54 @@ ${seccionNacionales}`;
 app.listen(port, () => {
   console.log(`Servidor corriendo en el puerto ${port}`);
 });
+// ==========================================
+// NUEVO ENDPOINT: OPCIÓN 4 (Síntesis con Enlaces Directos)
+// ==========================================
+app.get('/api/opcion-4', async (req, res) => {
+    try {
+        // 1. Definición de tus portales (ejemplo de la estructura que ya usas)
+        const portales = [
+            { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx" },
+            { nombre: "DIARIO DE CHIAPAS", url: "https://www.diariodechiapas.com" },
+            // ... Agrega aquí el resto de tus portales habituales ...
+        ];
+
+        // 2. Ejecución concurrente con Promise.all (la optimización que ya implementamos)
+        const promesasPortales = portales.map(async (portal) => {
+            try {
+                // Usando Jina Reader o el método de scraping que tengas configurado
+                const jinaUrl = `https://r.jina.ai/${portal.url}`;
+                const response = await fetch(jinaUrl, {
+                    headers: { 'User-Agent': 'Mozilla/5.0' }
+                });
+                const contenido = await response.text();
+                return { nombre: portal.nombre, urlBase: portal.url, contenido };
+            } catch (err) {
+                return { nombre: portal.nombre, urlBase: portal.url, contenido: "Error al obtener contenido" };
+            }
+        });
+
+        const resultadosPortales = await Promise.all(promesasPortales);
+
+        // 3. Construir el prompt exigiendo que la IA extraiga los enlaces individuales de las notas
+        let promptContenido = "A partir del siguiente contenido de los portales de noticias, genera una síntesis de prensa.\n";
+        promptContenido += "REQUISITO OBLIGATORIO: Para cada noticia, debes proporcionar:\n";
+        promptContenido += "1. El título de la nota.\n";
+        promptContenido += "2. El enlace exacto (URL) de la nota original si viene en el texto, o la del portal.\n";
+        promptContenido += "3. Un extracto o resumen breve.\n\n";
+
+        resultadosPortales.forEach(p => {
+            promptContenido += `--- PORTAL: ${p.nombre} (URL Base: ${p.urlBase}) ---\n${p.contenido}\n\n`;
+        });
+
+        // 4. Llamada a tu modelo de IA (DeepSeek / Gemini)
+        // Ajusta esta llamada según la librería o fetch que uses para tu API key de IA
+        const respuestaIA = await llamarModeloIA(promptContenido); 
+
+        res.json({ success: true, resultado: respuestaIA });
+
+    } catch (error) {
+        console.error("Error en Opción 4:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
