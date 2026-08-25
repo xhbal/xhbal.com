@@ -1,67 +1,52 @@
-require('dotenv').config();
-
-const express = require('express');
-const axios = require('axios');
-const path = require('path');
-const cors = require('cors');
-
-const app = express();
-const port = process.env.PORT || 3000;
-
-// Habilitar CORS para evitar bloqueos del navegador
-app.use(cors());
-app.use(express.json());
-
-// Servir todos los archivos estáticos desde la raíz del proyecto
-app.use(express.static(__dirname));
-
-function getFechaFormateada() {
-  const opciones = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  };
-  return new Date().toLocaleDateString('es-MX', opciones);
+// Función para raspar contenido de URLs usando Jina Reader
+async function obtenerContenidoJina(urls) {
+  let contenidoAcumulado = '';
+  for (const url of urls) {
+    try {
+      const response = await axios.get(`https://r.jina.ai/${url}`, { timeout: 15000 });
+      contenidoAcumulado += `\n--- FUENTE: ${url} ---\n` + response.data + '\n';
+    } catch (err) {
+      console.error(`Error al obtener ${url} via Jina:`, err.message);
+    }
+  }
+  return contenidoAcumulado;
 }
-
-function getFechasFiltro() {
-  const hoy = new Date();
-  const ayer = new Date(hoy);
-  ayer.setDate(hoy.getDate() - 1);
-
-  const format = (d) => d.toISOString().split('T')[0];
-  return {
-    fechaHoy: format(hoy),
-    fechaAyer: format(ayer),
-    hoyTexto: hoy.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })
-  };
-}
-
-// Endpoint de prueba de salud para Render (Health Check)
-app.get('/health', (req, res) => {
-  res.status(200).send('OK');
-});
 
 // Endpoint POST para la generación del guion
 app.post('/api/generar-noticiero', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      console.error('Error: DEEPSEEK_API_KEY no está configurada en las variables de entorno.');
       return res.status(500).json({
         exito: false,
-        error: 'La clave de API de DeepSeek no está configurada en el servidor.'
+        error: 'La clave de API de DeepSeek no está configurada.'
       });
     }
 
-    const { seccionLocal, seccionChiapas, seccionNacionales } = req.body;
+    // 1. DEFINIR URLS POR SECCIÓN
+    const urlsLocales = [
+      'https://ejemplo.com/local1',
+      'https://ejemplo.com/local2'
+    ];
+    const urlsChiapas = [
+      'https://ejemplo.com/chiapas1',
+      'https://ejemplo.com/chiapas2'
+    ];
+    const urlsNacionales = [
+      'https://ejemplo.com/nacional1',
+      'https://ejemplo.com/internacional1'
+    ];
+
+    // 2. SCRAPING AUTOMÁTICO VÍA JINA READER
+    console.log('Obteniendo noticias desde los portales...');
+    const seccionLocal = await obtenerContenidoJina(urlsLocales);
+    const seccionChiapas = await obtenerContenidoJina(urlsChiapas);
+    const seccionNacionales = await obtenerContenidoJina(urlsNacionales);
+
     const { fechaHoy, fechaAyer, hoyTexto } = getFechasFiltro();
     const fechaEmision = getFechaFormateada();
 
+    // 3. ARMADO DEL PROMPT (usando las variables ya pobladas con Jina)
     const prompt = `Hoy es ${hoyTexto}. Fecha exacta: ${fechaHoy}.
 Rango de fechas aceptable para noticias: ${fechaAyer} a ${fechaHoy}.
 
@@ -158,7 +143,7 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        timeout: 120000 // 2 minutos de timeout para respuestas largas de la API
+        timeout: 120000
       }
     );
 
@@ -181,14 +166,4 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
       detalle: typeof detalleError === 'object' ? JSON.stringify(detalleError) : detalleError
     });
   }
-});
-
-// Servir el frontend HTML para cualquier ruta navegable
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-const HOST = '0.0.0.0';
-app.listen(port, HOST, () => {
-  console.log(`Servidor de Guiones activo en el puerto ${port}`);
 });
