@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Procesador de Noticias | XHBAL</title>
-  <!-- Librería para generación directa de PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
@@ -45,12 +44,6 @@
       color: var(--primary);
     }
 
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
     .btn {
       background-color: var(--primary);
       color: white;
@@ -66,19 +59,12 @@
     .btn:hover { background-color: var(--secondary); }
     .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
 
-    .btn-secondary {
-      background-color: #475569;
-    }
-
+    .btn-secondary { background-color: #475569; }
     .btn-secondary:hover { background-color: #64748b; }
 
-    .btn-edit {
-      background-color: #d97706;
-    }
-
+    .btn-edit { background-color: #d97706; }
     .btn-edit:hover { background-color: #b45309; }
 
-    /* BARRA DE PROGRESO */
     .progress-container {
       display: none;
       background: var(--card);
@@ -137,7 +123,6 @@
       margin-top: 20px;
     }
 
-    /* REGLAS PARA IMPRESIÓN */
     @media print {
       body { background-color: #ffffff; color: #000000; padding: 0; }
       .header-tools, .progress-container, .footer-actions { display: none !important; }
@@ -148,13 +133,11 @@
 <body>
 
   <div class="container">
-    <!-- BARRA SUPERIOR -->
     <div class="header-tools">
       <h2>Guión de Noticias XHBAL</h2>
       <button id="btnGenerar" class="btn" onclick="generarGuion()">Generar Guión</button>
     </div>
 
-    <!-- MÓDULO DE BARRA DE PROGRESO -->
     <div id="progressBox" class="progress-container">
       <div class="progress-status">
         <span id="statusText">Iniciando proceso...</span>
@@ -165,10 +148,8 @@
       </div>
     </div>
 
-    <!-- CONTENEDOR DEL GUIÓN -->
     <div id="guionContenido" class="guion-box" contenteditable="false">Haz clic en "Generar Guión" para procesar la información del día.</div>
 
-    <!-- BOTONES INFERIORES -->
     <div class="footer-actions">
       <button id="btnEditar" class="btn btn-edit" onclick="toggleEdicion()">Editar</button>
       <button class="btn btn-secondary" onclick="window.print()">Imprimir</button>
@@ -190,71 +171,56 @@
 
       btn.disabled = true;
       progressBox.style.display = "block";
-      contenedor.innerText = "Procesando la información en tiempo real con DeepSeek...";
+      contenedor.innerText = "Procesando información con DeepSeek...";
       contenedor.contentEditable = "false";
       document.getElementById("btnEditar").innerText = "Editar";
 
-      actualizarProgreso(15, "Enviando solicitud al servidor...");
+      actualizarProgreso(15, "Conectando con el servidor...");
 
-      // Simulación visual de avance mientras la API de DeepSeek procesa los textos
       let progreso = 15;
       const intervaloProgreso = setInterval(() => {
         if (progreso < 85) {
           progreso += 5;
-          let estado = "Redactando bloques de noticias...";
-          if (progreso > 50) estado = "Aplicando formato para radio comercial...";
+          let estado = "Redactando notas periodísticas...";
+          if (progreso > 50) estado = "Aplicando formato de radio...";
           actualizarProgreso(progreso, estado);
         }
       }, 1500);
 
       try {
-  const response = await fetch('/api/generar-noticiero', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    seccionLocal: '',
-    seccionChiapas: '',
-    seccionNacionales: ''
-  })
-});
+        const response = await fetch('/api/generar-noticiero', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            seccionLocal: '',
+            seccionChiapas: '',
+            seccionNacionales: ''
+          })
+        });
 
-const data = await response.json();
-
-if (!response.ok || !data.exito) {
-  // Muestra el detalle real del error devuelto por el servidor o DeepSeek
-  contenedor.innerText = `Error del Servidor (${response.status}): ${data.error || ''} \nDetalle: ${data.detalle || 'Sin detalle'}`;
-  actualizarProgreso(100, "Error en el servidor");
-  return;
-}
-
-actualizarProgreso(100, "¡Guión generado con éxito!");
-contenedor.innerText = data.guion;
         clearInterval(intervaloProgreso);
-
         const data = await response.json();
 
         if (response.ok && data.exito) {
           actualizarProgreso(100, "¡Guión generado con éxito!");
           contenedor.innerText = data.guion;
         } else {
-          actualizarProgreso(100, "Error en la generación");
-          contenedor.innerText = "Error: " + (data.error || "No se pudo generar el guión de noticias.");
-          console.error("Detalle del error:", data.detalle);
+          actualizarProgreso(100, "Error en la respuesta");
+          contenedor.innerText = `Error (${response.status}): ${data.error || 'No se pudo generar'}\nDetalle: ${data.detalle || 'Revisa la variable DEEPSEEK_API_KEY en Render'}`;
         }
 
       } catch (error) {
         clearInterval(intervaloProgreso);
-        console.error("Error al conectar con la API:", error);
-        actualizarProgreso(100, "Error de conexión");
-        contenedor.innerText = "Error de conexión con el servidor. Revisa si el backend está activo.";
+        console.error("Error en la llamada fetch:", error);
+        actualizarProgreso(100, "Error de comunicación");
+        contenedor.innerText = "Error de comunicación con el backend. Por favor intenta recargar con Ctrl + Shift + R.";
       } finally {
         btn.disabled = false;
       }
     }
 
-    // Función para activar o desactivar la edición sobre el área del texto
     function toggleEdicion() {
       const contenedor = document.getElementById("guionContenido");
       const btn = document.getElementById("btnEditar");
@@ -273,7 +239,6 @@ contenedor.innerText = data.guion;
       }
     }
 
-    // Función para descargar directo en PDF
     function exportarPDF() {
       const elemento = document.getElementById("guionContenido");
       const opciones = {
