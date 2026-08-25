@@ -44,6 +44,36 @@
       color: var(--primary);
     }
 
+    .inputs-section {
+      background: var(--card);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--primary);
+    }
+
+    .input-group textarea {
+      width: 100%;
+      height: 90px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: inherit;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
     .btn {
       background-color: var(--primary);
       color: white;
@@ -125,7 +155,7 @@
 
     @media print {
       body { background-color: #ffffff; color: #000000; padding: 0; }
-      .header-tools, .progress-container, .footer-actions { display: none !important; }
+      .header-tools, .inputs-section, .progress-container, .footer-actions { display: none !important; }
       .guion-box { box-shadow: none; padding: 0; margin: 0; font-size: 11pt; border: none !important; }
     }
   </style>
@@ -136,6 +166,24 @@
     <div class="header-tools">
       <h2>Guión de Noticias XHBAL</h2>
       <button id="btnGenerar" class="btn" onclick="generarGuion()">Generar Guión</button>
+    </div>
+
+    <!-- SECCIÓN DE ENTRADA DE TEXTO PARA NOTICIAS -->
+    <div class="inputs-section">
+      <div class="input-group">
+        <label for="txtLocal">1. Noticias Locales (San Cristóbal y Altos):</label>
+        <textarea id="txtLocal" placeholder="Pega aquí las notas locales extraídas de portales o redactadas..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label for="txtChiapas">2. Noticias Chiapas (Resto del Estado):</label>
+        <textarea id="txtChiapas" placeholder="Pega aquí la información de Tuxtla, Tapachula, Palenque, etc..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label for="txtNacionales">3. Noticias Nacionales e Internacionales:</label>
+        <textarea id="txtNacionales" placeholder="Pega aquí la síntesis nacional o internacional..."></textarea>
+      </div>
     </div>
 
     <div id="progressBox" class="progress-container">
@@ -169,6 +217,11 @@
       const progressBox = document.getElementById("progressBox");
       const contenedor = document.getElementById("guionContenido");
 
+      // Capturar textos pegados en la interfaz
+      const textoLocal = document.getElementById("txtLocal").value.trim();
+      const textoChiapas = document.getElementById("txtChiapas").value.trim();
+      const textoNacionales = document.getElementById("txtNacionales").value.trim();
+
       btn.disabled = true;
       progressBox.style.display = "block";
       contenedor.innerText = "Procesando información con DeepSeek...";
@@ -194,9 +247,9 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            seccionLocal: '',
-            seccionChiapas: '',
-            seccionNacionales: ''
+            seccionLocal: textoLocal,
+            seccionChiapas: textoChiapas,
+            seccionNacionales: textoNacionales
           })
         });
 
@@ -208,14 +261,14 @@
           contenedor.innerText = data.guion;
         } else {
           actualizarProgreso(100, "Error en la respuesta");
-          contenedor.innerText = `Error (${response.status}): ${data.error || 'No se pudo generar'}\nDetalle: ${data.detalle || 'Revisa la variable DEEPSEEK_API_KEY en Render'}`;
+          contenedor.innerText = `Error (${response.status}): ${data.error || 'No se pudo generar'}\nDetalle: ${data.detalle || ''}`;
         }
 
       } catch (error) {
         clearInterval(intervaloProgreso);
         console.error("Error en la llamada fetch:", error);
         actualizarProgreso(100, "Error de comunicación");
-        contenedor.innerText = "Error de comunicación con el backend. Por favor intenta recargar con Ctrl + Shift + R.";
+        contenedor.innerText = "Error de comunicación con el backend.";
       } finally {
         btn.disabled = false;
       }
