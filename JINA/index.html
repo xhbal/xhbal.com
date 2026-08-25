@@ -152,11 +152,11 @@
       line-height: 1.5;
     }
 
-    /* Contenedor especial visual para la Opción 4 con botones directos */
+    /* Contenedor visual enriquecido para la Opción 4 con botones independientes */
     #contenedorOpcion4 {
       display: none;
       width: 100%;
-      max-height: 500px;
+      max-height: 550px;
       overflow-y: auto;
       padding: 15px;
       border: 1px solid var(--border);
@@ -264,7 +264,7 @@
       <!-- Cuadro de texto tradicional para las opciones 1, 2 y 3 -->
       <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
 
-      <!-- Contenedor visual enriquecido exclusivo para la Opción 4 (Botones individuales por nota) -->
+      <!-- Contenedor visual enriquecido exclusivo para la Opción 4 con botones independientes por nota -->
       <div id="contenedorOpcion4"></div>
     </div>
   </div>
@@ -284,50 +284,44 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    // Función avanzada para formatear la Opción 4 en tarjetas con botón individual
+    // Función que procesa el texto de la Opción 4 y crea tarjetas con botones individuales
     function renderizarOpcion4ConBotones(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
 
-      // Separar por saltos de línea para estructurar
       const lineas = textoGuion.split('\n');
       let htmlAcumulado = '';
-      let tituloActual = '';
-      let enlaceActual = '';
-      let extractoActual = '';
       let portalActual = '';
 
       lineas.forEach(linea => {
         linea = linea.trim();
-        if (linea.includes('|') && !linea.startsWith('-')) {
-          portalActual = linea;
-        } else if (linea.startsWith('- TÍTULO:') || linea.startsWith('TÍTULO:')) {
-          tituloActual = linea.replace(/^-?\s*TÍTULO:\s*/, '');
-        } else if (linea.startsWith('ENLACE:')) {
-          enlaceActual = linea.replace('ENLACE:', '').trim();
-        } else if (linea.startsWith('EXTRACTO:')) {
-          extractoActual = linea.replace('EXTRACTO:', '').trim();
+        
+        // Detectar el nombre del portal actual
+        if (linea.startsWith('### ')) {
+          portalActual = linea.replace('### ', '');
+        } 
+        // Detectar cada noticia individual y generar su botón de búsqueda directa
+        else if (linea.startsWith('- **') || linea.startsWith('- ')) {
+          let tituloNota = linea.replace(/^- \*\*(.*?)\*\*/, '$1').replace(/^- /, '');
           
-          // Al tener los datos mínimos, armamos la tarjeta visual
-          if (tituloActual) {
-            htmlAcumulado += `
-              <div class="tarjeta-noticia">
-                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">${portalActual}</small>
-                <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${tituloActual}</h4>
-                <p style="font-size: 13px; color: #334155; margin-bottom: 6px;">${extractoActual}</p>
-                ${enlaceActual ? `<a href="${enlaceActual}" target="_blank" class="btn-enlace-individual">🔗 Leer noticia completa</a>` : ''}
-              </div>
-            `;
-            tituloActual = ''; enlaceActual = ''; extractoActual = '';
-          }
+          let urlBusqueda = `https://www.google.com/search?q=${encodeURIComponent(tituloNota + ' ' + portalActual)}`;
+
+          htmlAcumulado += `
+            <div class="tarjeta-noticia">
+              <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">📡 ${portalActual}</small>
+              <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${tituloNota}</h4>
+              <a href="${urlBusqueda}" target="_blank" class="btn-enlace-individual">
+                🔗 Buscar y leer nota completa
+              </a>
+            </div>
+          `;
         }
       });
 
-      // Si el formato de texto fue libre, respaldo general con autodetectador de URLs
       if (htmlAcumulado === '') {
         contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
       } else {
-        contenedor.innerHTML = `<h3 style="margin-bottom: 12px; color: #0f766e;">Monitoreo con Enlaces Directos</h3>` + htmlAcumulado;
+        contenedor.innerHTML = `<h3 style="margin-bottom: 12px; color: #0f766e;">Monitoreo de Noticias con Acceso Directo</h3>` + htmlAcumulado;
       }
     }
 
@@ -359,7 +353,7 @@
       contenedorOpcion4.style.display = 'none';
       btnCopiar.style.display = 'none';
 
-      // Simulación de avance del contador de 1 a 90%
+      // Simulación de avance de la barra de porcentaje de 1% a 90%
       let porcentajeActual = 0;
       barraProgreso.style.width = '0%';
       textoPorcentaje.innerText = '0%';
@@ -391,7 +385,7 @@
 
         const data = await response.json();
 
-        // Al recibir respuesta completamos al 100%
+        // Al recibir la respuesta completamos la barra al 100%
         clearInterval(intervaloProgreso);
         barraProgreso.style.width = '100%';
         textoPorcentaje.innerText = '100%';
@@ -401,7 +395,7 @@
           if (esOpcion4) {
             contenedorOpcion4.style.display = 'block';
             renderizarOpcion4ConBotones(data.guion);
-            salidaGuion.value = data.guion; // Guardado por si acaso
+            salidaGuion.value = data.guion; // Guardado de respaldo en el textarea oculto
           } else {
             salidaGuion.style.display = 'block';
             salidaGuion.value = data.guion;
