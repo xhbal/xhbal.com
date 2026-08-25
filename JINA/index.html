@@ -30,7 +30,6 @@
       padding: 15px;
     }
 
-    /* Contenedor que ocupa todo el ancho de la página */
     .container {
       width: 100%;
       max-width: 100%;
@@ -154,74 +153,84 @@
       line-height: 1.5;
     }
 
-    /* Contenedor de Opción 4 adaptado a ancho completo sin scroll interno */
     #contenedorOpcion4 {
       display: none;
       width: 100%;
     }
 
-    /* Diseño en lista compacta, una tras otra */
-    .tarjeta-noticia {
-      background: #ffffff;
+    /* Estilo de lista compacta continua sin espacios muertos */
+    .grupo-portal {
+      margin-bottom: 15px;
       border-bottom: 1px solid var(--border);
-      padding: 12px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      padding-bottom: 10px;
     }
 
-    .tarjeta-noticia:last-child {
+    .grupo-portal:last-child {
       border-bottom: none;
     }
 
-    .tarjeta-header-fila {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
     .badge-portal {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       color: #0f766e;
       background: #f0fdfa;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 4px;
       text-transform: uppercase;
       border: 1px solid #ccfbf1;
+      display: inline-block;
+      margin-bottom: 8px;
     }
 
-    /* Botón alineado a la derecha */
-    .btn-enlace-individual {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background-color: #0284c7;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 4px;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      transition: background-color 0.2s;
-      white-space: nowrap;
+    .item-nota {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+      padding: 8px 0;
+      border-top: 1px dashed #f1f5f9;
     }
 
-    .btn-enlace-individual:hover {
-      background-color: #0369a1;
+    .item-nota:first-of-type {
+      border-top: none;
+    }
+
+    .contenido-nota {
+      flex: 1;
     }
 
     .titulo-noticia {
-      font-size: 17px;
+      font-size: 15px;
       color: var(--primary);
       font-weight: 700;
       line-height: 1.3;
+      margin-bottom: 3px;
     }
 
     .extracto-noticia {
       font-size: 13px;
       color: #475569;
       line-height: 1.4;
+    }
+
+    .btn-enlace-individual {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background-color: #0284c7;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      transition: background-color 0.2s;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    .btn-enlace-individual:hover {
+      background-color: #0369a1;
     }
 
     .alerta {
@@ -290,10 +299,9 @@
         </button>
       </div>
 
-      <!-- Cuadro de texto tradicional para opciones 1, 2 y 3 -->
       <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
-
-      <!-- Contenedor de Opción 4 en lista vertical continua de ancho completo -->
+      
+      <!-- Contenedor agrupado y compacto -->
       <div id="contenedorOpcion4"></div>
     </div>
   </div>
@@ -313,74 +321,95 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
+    // Agrupa automáticamente por portal para que el medio aparezca una sola vez
     function renderizarOpcion4ConBotones(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
 
       const lineas = textoGuion.split('\n');
-      let htmlAcumulado = '';
+      let notasPorPortal = {};
       
       let portalActual = '';
       let tituloNota = '';
       let enlaceNota = '';
       let extractoNota = '';
 
+      function guardarNotaActual() {
+        if (tituloNota && portalActual) {
+          if (!notasPorPortal[portalActual]) {
+            notasPorPortal[portalActual] = [];
+          }
+          notasPorPortal[portalActual].push({
+            titulo: tituloNota.replace(/[\[\]]/g, '').replace(/^[•\-\*]\s*/, '').trim(),
+            enlace: enlaceNota.replace(/[\[\]]/g, '').trim(),
+            extracto: extractoNota.replace(/[\[\]]/g, '').trim()
+          });
+        }
+        tituloNota = ''; enlaceNota = ''; extractoNota = '';
+      }
+
       lineas.forEach(linea => {
         linea = linea.trim();
-
         if (linea.toUpperCase().startsWith('PORTAL:')) {
-          if (tituloNota) {
-            htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, enlaceNota, extractoNota);
-            tituloNota = ''; enlaceNota = ''; extractoNota = '';
-          }
-          portalActual = linea.replace(/^PORTAL:/i, '').trim();
+          guardarNotaActual();
+          portalActual = linea.replace(/^PORTAL:/i, '').replace(/[\[\]]/g, '').trim();
         } else if (linea.toUpperCase().startsWith('TÍTULO:') || linea.toUpperCase().startsWith('TITULO:')) {
+          guardarNotaActual();
           tituloNota = linea.replace(/^TÍTULO:/i, '').replace(/^TITULO:/i, '').trim();
         } else if (linea.toUpperCase().startsWith('ENLACE:')) {
           enlaceNota = linea.replace(/^ENLACE:/i, '').trim();
         } else if (linea.toUpperCase().startsWith('EXTRACTO:')) {
           extractoNota = linea.replace(/^EXTRACTO:/i, '').trim();
-        } else if (linea !== '' && tituloNota && !enlaceNota) {
-          tituloNota += ' ' + linea;
-        } else if (linea !== '' && enlaceNota && !extractoNota) {
-          enlaceNota += linea;
-        } else if (linea !== '' && extractoNota) {
-          extractoNota += ' ' + linea;
+        } else if (linea !== '') {
+          if (extractoNota) {
+            extractoNota += ' ' + linea;
+          } else if (enlaceNota) {
+            enlaceNota += linea;
+          } else if (tituloNota) {
+            tituloNota += ' ' + linea;
+          }
         }
       });
+      guardarNotaActual();
 
-      if (tituloNota) {
-        htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, enlaceNota, extractoNota);
+      let htmlAcumulado = `<h3 style="margin-bottom: 12px; color: #0f766e; font-size: 15px;">Monitoreo de Noticias Organizado por Medio</h3>`;
+
+      for (const [portal, notas] of Object.entries(notasPorPortal)) {
+        htmlAcumulado += `
+          <div class="grupo-portal">
+            <span class="badge-portal">📡 ${portal}</span>
+        `;
+
+        notas.forEach(nota => {
+          let urlLimpia = nota.enlace;
+          if (urlLimpia && !urlLimpia.startsWith('http')) {
+            urlLimpia = 'https://' + urlLimpia;
+          }
+          if (!urlLimpia || urlLimpia === 'https://') {
+            urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + portal)}`;
+          }
+
+          htmlAcumulado += `
+            <div class="item-nota">
+              <div class="contenido-nota">
+                <h4 class="titulo-noticia">${nota.titulo}</h4>
+                <p class="extracto-noticia">${nota.extracto}</p>
+              </div>
+              <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
+                🔗 Leer nota
+              </a>
+            </div>
+          `;
+        });
+
+        htmlAcumulado += `</div>`;
       }
 
-      if (htmlAcumulado === '') {
+      if (Object.keys(notasPorPortal).length === 0) {
         contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
       } else {
-        contenedor.innerHTML = `<h3 style="margin-bottom: 8px; color: #0f766e; font-size: 15px;">Monitoreo de Noticias con Enlaces Directos</h3>` + htmlAcumulado;
+        contenedor.innerHTML = htmlAcumulado;
       }
-    }
-
-    function crearTarjetaHTML(portal, titulo, url, extracto) {
-      let urlLimpia = url.replace(/[\[\]]/g, '').trim();
-      if (urlLimpia && !urlLimpia.startsWith('http')) {
-        urlLimpia = 'https://' + urlLimpia;
-      }
-      if (!urlLimpia || urlLimpia === 'https://') {
-        urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(titulo + ' ' + portal)}`;
-      }
-
-      return `
-        <div class="tarjeta-noticia">
-          <div class="tarjeta-header-fila">
-            <span class="badge-portal">📡 ${portal.replace(/[\[\]]/g, '')}</span>
-            <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
-              🔗 Leer noticia completa
-            </a>
-          </div>
-          <h4 class="titulo-noticia">${titulo.replace(/[\[\]]/g, '').replace(/^[•\-\*]\s*/, '')}</h4>
-          <p class="extracto-noticia">${extracto.replace(/[\[\]]/g, '').trim()}</p>
-        </div>
-      `;
     }
 
     async function solicitarGuion(endpoint, esOpcion4) {
@@ -426,7 +455,7 @@
           if (porcentajeActual > 25 && porcentajeActual < 60) {
             loadingTexto.innerText = 'Extrayendo y limpiando contenidos con Jina Reader...';
           } else if (porcentajeActual >= 60) {
-            loadingTexto.innerText = 'Procesando y redactando con DeepSeek IA...';
+            loadingTexto.innerText = 'Procesando y redactando con IA...';
           }
         }
       }, 450);
