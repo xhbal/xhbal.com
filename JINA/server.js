@@ -276,7 +276,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS
+// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA
 // =========================================================
 app.post('/api/sintesis-con-enlaces', async (req, res) => {
   try {
@@ -289,16 +289,18 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
     const promptOpcion4 = `Actúa como analista de noticias y editor de radio. A partir del contenido de los portales de noticias proporcionados abajo, elabora una SÍNTESIS DE PRENSA.
 
 REQUISITOS OBLIGATORIOS:
-1. Para cada noticia seleccionada, incluye estrictamente:
+1. Para cada noticia seleccionada, extrae y proporciona obligatoriamente:
    - El título de la nota.
-   - El enlace o URL directa de la nota si viene incluida en el contenido, o la URL principal del portal correspondiente.
+   - El enlace web específico (URL exacta) de esa nota en particular. (Si no encuentras la URL exacta de la nota, usa la del portal).
    - Un extracto breve o resumen.
 2. OMISIONES: Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
 3. FILTRADO: Muestra únicamente notas que tengan contenido real y valioso.
 
-ESTRUCTURA DE SALIDA:
-[Nombre del Portal] | Enlace: [URL]
-- TÍTULO: [Extracto breve]
+ESTRUCTURA DE SALIDA ESTRICTA (Usa exactamente este formato para que el sistema pueda leer los enlaces):
+[Nombre del Portal]
+- TÍTULO: [Título de la noticia]
+  ENLACE: [URL_EXACTA_DE_LA_NOTA]
+  EXTRACTO: [Resumen breve]
 
 ════════════════════════════════════════
 PORTALES DE CHIAPAS:
@@ -312,7 +314,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios y jefe de prensa especializado en incluir enlaces y referencias exactas en los reportes.' },
+        { role: 'system', content: 'Eres un analista de medios experto en extraer URLs individuales y resúmenes estructurados.' },
         { role: 'user', content: promptOpcion4 }
       ],
       temperature: 0.2,
@@ -321,13 +323,9 @@ ${seccionNacionales}`;
 
     res.json({ 
       exito: true, 
-      guion: `SÍNTESIS DE PRENSA CON ENLACES\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+      guion: `SÍNTESIS DE PRENSA CON ENLACES DIRECTOS\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
 });
