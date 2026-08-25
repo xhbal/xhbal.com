@@ -284,43 +284,50 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    // Función que procesa el texto de la Opción 4 y crea tarjetas con botones basados en enlaces directos
+    // Función que procesa dinámicamente el formato de etiquetas estrictas de la Opción 4
     function renderizarOpcion4ConBotones(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
 
       const lineas = textoGuion.split('\n');
       let htmlAcumulado = '';
+      
       let portalActual = '';
       let tituloNota = '';
+      let enlaceNota = '';
       let extractoNota = '';
-      let enlaceDirecto = '';
 
       lineas.forEach(linea => {
         linea = linea.trim();
-        
-        if (linea.startsWith('### ')) {
-          portalActual = linea.replace('### ', '');
-        } else if (linea.startsWith('- **') || linea.startsWith('- ')) {
+
+        if (linea.toUpperCase().startsWith('PORTAL:')) {
+          // Si ya teníamos una nota armada previa, la guardamos antes de cambiar de bloque
           if (tituloNota) {
-            let urlFinal = enlaceDirecto || `https://www.google.com/search?q=${encodeURIComponent(tituloNota + ' ' + portalActual)}`;
-            htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, extractoNota, urlFinal);
-            tituloNota = ''; extractoNota = ''; enlaceDirecto = '';
+            htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, enlaceNota, extractoNota);
+            tituloNota = ''; enlaceNota = ''; extractoNota = '';
           }
-          tituloNota = linea.replace(/^- \*\*(.*?)\*\*/, '$1').replace(/^- /, '');
-        } else if (linea.startsWith('**Enlace directo:**') || linea.startsWith('Enlace directo:')) {
-          enlaceDirecto = linea.replace(/\*\*Enlace directo:\*\*/, '').replace('Enlace directo:', '').trim();
-        } else if (linea !== '' && !linea.startsWith('**Enlace:**') && !linea.startsWith('---')) {
-          if (tituloNota && !enlaceDirecto) {
-            extractoNota += linea + ' ';
-          }
+          portalActual = linea.replace(/^PORTAL:/i, '').trim();
+        } else if (linea.toUpperCase().startsWith('TÍTULO:') || linea.toUpperCase().startsWith('TITULO:')) {
+          tituloNota = linea.replace(/^TÍTULO:/i, '').replace(/^TITULO:/i, '').trim();
+        } else if (linea.toUpperCase().startsWith('ENLACE:')) {
+          enlaceNota = linea.replace(/^ENLACE:/i, '').trim();
+        } else if (linea.toUpperCase().startsWith('EXTRACTO:')) {
+          extractoNota = linea.replace(/^EXTRACTO:/i, '').trim();
+        } else if (linea !== '' && tituloNota && !enlaceNota) {
+          // Por si el título abarcaba más de una línea
+          tituloNota += ' ' + linea;
+        } else if (linea !== '' && enlaceNota && !extractoNota) {
+          // Por si el enlace abarcaba más de una línea
+          enlaceNota += linea;
+        } else if (linea !== '' && extractoNota) {
+          // Si el extracto tiene más líneas
+          extractoNota += ' ' + linea;
         }
       });
 
-      // Guardar la última nota del ciclo
+      // Añadir la última nota procesada
       if (tituloNota) {
-        let urlFinal = enlaceDirecto || `https://www.google.com/search?q=${encodeURIComponent(tituloNota + ' ' + portalActual)}`;
-        htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, extractoNota, urlFinal);
+        htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, enlaceNota, extractoNota);
       }
 
       if (htmlAcumulado === '') {
@@ -330,13 +337,21 @@
       }
     }
 
-    function crearTarjetaHTML(portal, titulo, extracto, url) {
+    function crearTarjetaHTML(portal, titulo, url, extracto) {
+      let urlLimpia = url.replace(/[\[\]]/g, '').trim();
+      if (urlLimpia && !urlLimpia.startsWith('http')) {
+        urlLimpia = 'https://' + urlLimpia;
+      }
+      if (!urlLimpia || urlLimpia === 'https://') {
+        urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(titulo + ' ' + portal)}`;
+      }
+
       return `
         <div class="tarjeta-noticia">
-          <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">📡 ${portal}</small>
-          <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${titulo}</h4>
-          <p style="font-size: 13px; color: #334155; margin-bottom: 6px;">${extracto.trim()}</p>
-          <a href="${url}" target="_blank" class="btn-enlace-individual">
+          <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">📡 ${portal.replace(/[\[\]]/g, '')}</small>
+          <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${titulo.replace(/[\[\]]/g, '')}</h4>
+          <p style="font-size: 13px; color: #334155; margin-bottom: 6px;">${extracto.replace(/[\[\]]/g, '').trim()}</p>
+          <a href="${urlLimpia}" target="_blank" class="btn-enlace-individual">
             🔗 Leer noticia completa
           </a>
         </div>
@@ -371,7 +386,6 @@
       contenedorOpcion4.style.display = 'none';
       btnCopiar.style.display = 'none';
 
-      // Simulación de avance de la barra de porcentaje de 1% a 90%
       let porcentajeActual = 0;
       barraProgreso.style.width = '0%';
       textoPorcentaje.innerText = '0%';
@@ -388,7 +402,7 @@
           if (porcentajeActual > 25 && porcentajeActual < 60) {
             loadingTexto.innerText = 'Extrayendo y limpiando contenidos con Jina Reader...';
           } else if (porcentajeActual >= 60) {
-            loadingTexto.innerText = 'Procesando y redactando con Inteligencia Artificial...';
+            loadingTexto.innerText = 'Procesando y redactando con DeepSeek IA...';
           }
         }
       }, 450);
@@ -403,7 +417,6 @@
 
         const data = await response.json();
 
-        // Al recibir la respuesta completamos la barra al 100%
         clearInterval(intervaloProgreso);
         barraProgreso.style.width = '100%';
         textoPorcentaje.innerText = '100%';
@@ -413,7 +426,7 @@
           if (esOpcion4) {
             contenedorOpcion4.style.display = 'block';
             renderizarOpcion4ConBotones(data.guion);
-            salidaGuion.value = data.guion; // Guardado de respaldo en el textarea oculto
+            salidaGuion.value = data.guion; // Respaldo en textarea oculto
           } else {
             salidaGuion.style.display = 'block';
             salidaGuion.value = data.guion;
