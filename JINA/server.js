@@ -3,11 +3,16 @@ require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Habilitar CORS para evitar bloqueos del navegador
+app.use(cors());
 app.use(express.json());
+
+// Servir todos los archivos estáticos desde la raíz del proyecto
 app.use(express.static(__dirname));
 
 function getFechaFormateada() {
@@ -36,18 +41,23 @@ function getFechasFiltro() {
   };
 }
 
-// Servir la interfaz web
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// Endpoint de prueba de salud para Render (Health Check)
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
 });
 
-app.get('/guion', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Endpoint POST para la generación
+// Endpoint POST para la generación del guion
 app.post('/api/generar-noticiero', async (req, res) => {
   try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      console.error('Error: DEEPSEEK_API_KEY no está configurada en las variables de entorno.');
+      return res.status(500).json({
+        exito: false,
+        error: 'La clave de API de DeepSeek no está configurada en el servidor.'
+      });
+    }
+
     const { seccionLocal, seccionChiapas, seccionNacionales } = req.body;
     const { fechaHoy, fechaAyer, hoyTexto } = getFechasFiltro();
     const fechaEmision = getFechaFormateada();
@@ -124,8 +134,10 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
 [TÍTULO EN MAYÚSCULAS]
 [Resumen periodístico en tercera persona]`;
 
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+
     const response = await axios.post(
-      process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
+      apiUrl,
       {
         model: 'deepseek-chat',
         messages: [
@@ -143,9 +155,10 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 120000 // 2 minutos de timeout para respuestas largas de la API
       }
     );
 
@@ -159,15 +172,23 @@ Fuente: [Nombre del medio original o Mesa de Redacción] | [Fecha] | [Hora o "Ho
     });
 
   } catch (error) {
-    console.error('Error al generar el guión:', error?.response?.data || error.message);
+    const detalleError = error?.response?.data || error.message;
+    console.error('Error al generar el guión:', detalleError);
+
     res.status(500).json({
       exito: false,
-      error: 'Error al procesar el guión de noticias.'
+      error: 'Error al procesar el guión de noticias.',
+      detalle: typeof detalleError === 'object' ? JSON.stringify(detalleError) : detalleError
     });
   }
 });
 
+// Servir el frontend HTML para cualquier ruta navegable
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 const HOST = '0.0.0.0';
 app.listen(port, HOST, () => {
-  console.log(`Servidor de Guiones activo en puerto ${port}`);
+  console.log(`Servidor de Guiones activo en el puerto ${port}`);
 });
