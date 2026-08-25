@@ -3,269 +3,281 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Procesador de Noticias | XHBAL</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <title>Generador de Guiones de Noticiero - Radio</title>
   <style>
-    :root {
-      --primary: #1e3a8a;
-      --secondary: #2563eb;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #1e293b;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
+      background-color: #f4f6f9;
+      color: #333;
+      display: flex;
+      justify-content: center;
       padding: 20px;
     }
 
     .container {
+      width: 100%;
       max-width: 900px;
-      margin: 0 auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
 
-    .header-tools {
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #eef2f5;
+      padding-bottom: 15px;
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #1a252f;
+      margin-bottom: 8px;
+    }
+
+    p.subtitulo {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .panel-acciones {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--card);
-      padding: 15px 20px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-
-    .header-tools h2 {
-      margin: 0;
-      font-size: 1.25rem;
-      color: var(--primary);
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 25px;
+      justify-content: center;
     }
 
     .btn {
-      background-color: var(--primary);
-      color: white;
+      flex: 1;
+      min-width: 220px;
+      padding: 14px 20px;
       border: none;
-      padding: 10px 18px;
-      border-radius: 6px;
+      border-radius: 8px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.2s;
-      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #ffffff;
     }
 
-    .btn:hover { background-color: var(--secondary); }
-    .btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+    .btn-editado {
+      background-color: #2e7d32;
+    }
 
-    .btn-secondary { background-color: #475569; }
-    .btn-secondary:hover { background-color: #64748b; }
+    .btn-editado:hover {
+      background-color: #1b5e20;
+    }
 
-    .btn-edit { background-color: #d97706; }
-    .btn-edit:hover { background-color: #b45309; }
+    .btn-original {
+      background-color: #1565c0;
+    }
 
-    .progress-container {
+    .btn-original:hover {
+      background-color: #0d47a1;
+    }
+
+    .btn-copiar {
+      background-color: #424242;
       display: none;
-      background: var(--card);
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    .progress-status {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #475569;
+    .btn-copiar:hover {
+      background-color: #212121;
     }
 
-    .progress-bar-bg {
+    .btn:disabled {
+      background-color: #b0bec5;
+      cursor: not-allowed;
+    }
+
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      font-size: 16px;
+      color: #555;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1565c0;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .contenedor-resultado {
+      position: relative;
+    }
+
+    textarea {
       width: 100%;
-      height: 12px;
-      background: #e2e8f0;
-      border-radius: 6px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-
-    .progress-bar-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      transition: width 0.4s ease;
-    }
-
-    .guion-box {
-      background: var(--card);
-      padding: 30px;
+      height: 550px;
+      padding: 18px;
+      border: 1px solid #cfd8dc;
       border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 15px;
+      line-height: 1.5;
+      background-color: #fafafa;
+      color: #1a252f;
+      resize: vertical;
       white-space: pre-wrap;
-      font-size: 1.05rem;
-      line-height: 1.6;
-      min-height: 250px;
-      margin-bottom: 20px;
+    }
+
+    textarea:focus {
       outline: none;
+      border-color: #1565c0;
+      box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
     }
 
-    .guion-box[contenteditable="true"] {
-      border: 2px dashed var(--secondary);
-      background-color: #ffffff;
+    .alerta {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      display: none;
+      font-size: 14px;
     }
 
-    .footer-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-top: 20px;
+    .alerta-exito {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
     }
 
-    @media print {
-      body { background-color: #ffffff; color: #000000; padding: 0; }
-      .header-tools, .progress-container, .footer-actions { display: none !important; }
-      .guion-box { box-shadow: none; padding: 0; margin: 0; font-size: 11pt; border: none !important; }
+    .alerta-error {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="header-tools">
-      <h2>Guión de Noticias XHBAL</h2>
-      <button id="btnGenerar" class="btn" onclick="generarGuion()">Generar Guión</button>
+    <header>
+      <h1>Generador de Guiones de Noticiero</h1>
+      <p class="subtitulo">Sistema de extracción y procesamiento de noticias para locución en radio</p>
+    </header>
+
+    <div class="panel-acciones">
+      <button id="btnEditado" class="btn btn-editado" onclick="solicitarGuion('/api/generar-noticiero')">
+        📄 Generar Guión Editado
+      </button>
+
+      <button id="btnOriginal" class="btn btn-original" onclick="solicitarGuion('/api/generar-guion-original')">
+        📰 Generar Guión Original
+      </button>
+
+      <button id="btnCopiar" class="btn btn-copiar" onclick="copiarAlPortapapeles()">
+        📋 Copiar Guión
+      </button>
     </div>
 
-    <div id="progressBox" class="progress-container">
-      <div class="progress-status">
-        <span id="statusText">Iniciando proceso...</span>
-        <span id="percentageText">0%</span>
-      </div>
-      <div class="progress-bar-bg">
-        <div id="progressBar" class="progress-bar-fill"></div>
-      </div>
+    <div id="alerta" class="alerta"></div>
+
+    <div id="loading">
+      <div class="spinner"></div>
+      <p id="loadingTexto">Raspando portales de noticias y estructurando el guión...</p>
+      <small style="color: #777;">Este proceso puede tomar entre 30 y 60 segundos.</small>
     </div>
 
-    <div id="guionContenido" class="guion-box" contenteditable="false">Haz clic en "Generar Guión" para procesar la información del día.</div>
-
-    <div class="footer-actions">
-      <button id="btnEditar" class="btn btn-edit" onclick="toggleEdicion()">Editar</button>
-      <button class="btn btn-secondary" onclick="window.print()">Imprimir</button>
-      <button class="btn btn-secondary" onclick="exportarPDF()">Guardar en PDF</button>
+    <div class="contenedor-resultado">
+      <textarea id="salidaGuion" placeholder="El guión generado aparecerá en esta área listo para lectura o edición..." readonly></textarea>
     </div>
   </div>
 
   <script>
-    function obtenerNumeroGuionDia() {
-      const hoy = new Date().toISOString().split('T')[0];
-      const ultimoDia = localStorage.getItem('guion_fecha');
-      let contador = parseInt(localStorage.getItem('guion_contador') || '0', 10);
+    async function solicitarGuion(endpoint) {
+      const btnEditado = document.getElementById('btnEditado');
+      const btnOriginal = document.getElementById('btnOriginal');
+      const btnCopiar = document.getElementById('btnCopiar');
+      const loading = document.getElementById('loading');
+      const salidaGuion = document.getElementById('salidaGuion');
+      const alerta = document.getElementById('alerta');
 
-      if (ultimoDia !== hoy) {
-        contador = 1;
-        localStorage.setItem('guion_fecha', hoy);
-      } else {
-        contador += 1;
-      }
-
-      localStorage.setItem('guion_contador', contador.toString());
-      return contador;
-    }
-
-    function actualizarProgreso(porcentaje, mensaje) {
-      document.getElementById("progressBar").style.width = porcentaje + "%";
-      document.getElementById("percentageText").innerText = porcentaje + "%";
-      document.getElementById("statusText").innerText = mensaje;
-    }
-
-    async function generarGuion() {
-      const btn = document.getElementById("btnGenerar");
-      const progressBox = document.getElementById("progressBox");
-      const contenedor = document.getElementById("guionContenido");
-
-      btn.disabled = true;
-      progressBox.style.display = "block";
-      contenedor.innerText = "Consultando portales con Jina Reader y redactando con DeepSeek...";
-      contenedor.contentEditable = "false";
-      document.getElementById("btnEditar").innerText = "Editar";
-
-      actualizarProgreso(15, "Obteniendo notas de los sitios web...");
-
-      let progreso = 15;
-      const intervaloProgreso = setInterval(() => {
-        if (progreso < 85) {
-          progreso += 5;
-          let estado = "Extrayendo noticias de las fuentes...";
-          if (progreso > 40) estado = "Redactando notas con estilo de radio...";
-          if (progreso > 70) estado = "Organizando secciones del noticiero...";
-          actualizarProgreso(progreso, estado);
-        }
-      }, 2000);
+      // Interfaz en estado de carga
+      btnEditado.disabled = true;
+      btnOriginal.disabled = true;
+      loading.style.display = 'block';
+      alerta.style.display = 'none';
+      salidaGuion.value = '';
+      btnCopiar.style.display = 'none';
 
       try {
-        const response = await fetch('/api/generar-noticiero', {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           }
         });
 
-        clearInterval(intervaloProgreso);
         const data = await response.json();
 
-        if (response.ok && data.exito) {
-          actualizarProgreso(100, "¡Guión generado con éxito!");
-          
-          const numGuion = obtenerNumeroGuionDia();
-          const encabezadoConNumero = `GUIÓN #${numGuion} DEL DÍA\n${data.guion}`;
-          
-          contenedor.innerText = encabezadoConNumero;
+        if (data.exito) {
+          salidaGuion.value = data.guion;
+          salidaGuion.removeAttribute('readonly'); // Permitir que el usuario edite si quiere
+          btnCopiar.style.display = 'flex';
+          mostrarAlerta('Guión generado con éxito.', 'exito');
         } else {
-          actualizarProgreso(100, "Error en la respuesta");
-          contenedor.innerText = `Error (${response.status}): ${data.error || 'No se pudo generar'}\nDetalle: ${data.detalle || ''}`;
+          mostrarAlerta(`Error: ${data.error || 'No se pudo generar el guión.'}`, 'error');
         }
 
       } catch (error) {
-        clearInterval(intervaloProgreso);
-        console.error("Error en la llamada fetch:", error);
-        actualizarProgreso(100, "Error de comunicación");
-        contenedor.innerText = "Error de comunicación con el backend.";
+        console.error('Error en la petición:', error);
+        mostrarAlerta('Error de conexión con el servidor. Inténtalo de nuevo.', 'error');
       } finally {
-        btn.disabled = false;
+        btnEditado.disabled = false;
+        btnOriginal.disabled = false;
+        loading.style.display = 'none';
       }
     }
 
-    function toggleEdicion() {
-      const contenedor = document.getElementById("guionContenido");
-      const btn = document.getElementById("btnEditar");
+    function copiarAlPortapapeles() {
+      const salidaGuion = document.getElementById('salidaGuion');
+      
+      if (!salidaGuion.value) return;
 
-      if (contenedor.contentEditable === "true") {
-        contenedor.contentEditable = "false";
-        btn.innerText = "Editar";
-        btn.classList.remove("btn-secondary");
-        btn.classList.add("btn-edit");
-      } else {
-        contenedor.contentEditable = "true";
-        contenedor.focus();
-        btn.innerText = "Guardar Cambios";
-        btn.classList.remove("btn-edit");
-        btn.classList.add("btn-secondary");
-      }
+      salidaGuion.select();
+      salidaGuion.setSelectionRange(0, 99999); // Para móviles
+
+      navigator.clipboard.writeText(salidaGuion.value)
+        .then(() => {
+          mostrarAlerta('¡Guión copiado al portapapeles!', 'exito');
+        })
+        .catch(err => {
+          mostrarAlerta('No se pudo copiar automáticamente.', 'error');
+        });
     }
 
-    function exportarPDF() {
-      const elemento = document.getElementById("guionContenido");
-      const opciones = {
-        margin:       10,
-        filename:     'Guion_Noticias_XHBAL.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
-      };
+    function mostrarAlerta(mensaje, tipo) {
+      const alerta = document.getElementById('alerta');
+      alerta.innerText = mensaje;
+      alerta.className = `alerta alerta-${tipo}`;
+      alerta.style.display = 'block';
 
-      html2pdf().set(opciones).from(elemento).save();
+      setTimeout(() => {
+        alerta.style.display = 'none';
+      }, 4000);
     }
   </script>
 </body>
