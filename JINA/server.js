@@ -274,7 +274,6 @@ ${seccionNacionales}`;
     res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
   }
 });
-
 // =========================================================
 // OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA
 // =========================================================
@@ -286,44 +285,40 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
     const fechaEmision = getFechaFormateada();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptOpcion4 = `Actúa como analista de noticias y editor de radio. A partir del contenido de los portales de noticias proporcionados abajo, elabora una SÍNTESIS DE PRENSA.
+    // PROMPT REESTRUCTURADO: Exigimos enlaces independientes por nota obligatoriamente
+    const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes y asígnale a CADA una su propio enlace o la URL base del portal si no hay un enlace específico en el texto.
 
-REQUISITOS OBLIGATORIOS:
-1. Para cada noticia seleccionada, extrae y proporciona obligatoriamente:
-   - El título de la nota.
-   - El enlace web específico (URL exacta) de esa nota en particular. (Si no encuentras la URL exacta de la nota, usa la del portal).
-   - Un extracto breve o resumen.
-2. OMISIONES: Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
-3. FILTRADO: Muestra únicamente notas que tengan contenido real y valioso.
+REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
+PORTAL: [Nombre del Portal]
+TÍTULO: [Título claro de la noticia]
+ENLACE: [URL exacta de la noticia o del portal]
+EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
-ESTRUCTURA DE SALIDA ESTRICTA (Usa exactamente este formato para que el sistema pueda leer los enlaces):
-[Nombre del Portal]
-- TÍTULO: [Título de la noticia]
-  ENLACE: [URL_EXACTA_DE_LA_NOTA]
-  EXTRACTO: [Resumen breve]
+REQUISITOS:
+1. NO repitas el mismo enlace genérico para todas las notas si el portal ofrece URLs distintas en el contenido; si no hay enlace individual, usa la URL base del portal.
+2. Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
+3. Máximo de 3 a 4 notas destacadas por portal para mantener la síntesis limpia.
 
-════════════════════════════════════════
-PORTALES DE CHIAPAS:
+CONTENIDO DE PORTALES DE CHIAPAS:
 ${seccionChiapas}
 
-════════════════════════════════════════
-PORTALES NACIONALES:
+CONTENIDO DE PORTALES NACIONALES:
 ${seccionNacionales}`;
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios experto en extraer URLs individuales y resúmenes estructurados.' },
+        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO).' },
         { role: 'user', content: promptOpcion4 }
       ],
-      temperature: 0.2,
+      temperature: 0.1, // Temperatura baja para que siga estrictamente la estructura
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
     res.json({ 
       exito: true, 
-      guion: `SÍNTESIS DE PRENSA CON ENLACES DIRECTOS\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+      guion: `SÍNTESIS DE PRENSA CON ENLACES INDIVIDUALES\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
