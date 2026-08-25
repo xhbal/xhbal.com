@@ -159,7 +159,7 @@ Formato de cada nota:
   }
 });
 // =========================================================
-// OPCIÓN 2: GUIÓN ORIGINAL (NOTAS COMPLETAS Y FILTRADAS)
+// OPCIÓN 2: GUIÓN COMPLETO (NOTAS EXTENSAS SIN LEYENDAS VACÍAS)
 // =========================================================
 app.post('/api/generar-guion-original', async (req, res) => {
   try {
@@ -173,28 +173,28 @@ app.post('/api/generar-guion-original', async (req, res) => {
     const promptOriginal = `Hoy es ${hoy}. Fecha exacta: ${fechaHoy}.
 
 OBJETIVO:
-Generar una selección periodística limpia de las noticias MÁS IMPORTANTES de hoy. 
+Escribir un noticiero completo para radio. Toma la información raspada de los medios y redáctala en forma de notas informativas completas y bien desarrolladas (entre 2 y 4 párrafos por noticia).
 
-REGLAS CRÍTICAS:
-1. SELECCIÓN: Elige MÁXIMO 1 NOTICIA PRINCIPAL por cada portal. Omite portales que no tengan notas con texto completo disponible.
-2. NO ESCRIBAS "Nota no disponible": Si no hay texto completo desarrollado para una noticia, SIMPLEMENTE OMÍTELO y pasa a la siguiente noticia válida.
-3. REDACCIÓN INTEGRAL: Transcribe el cuerpo completo de la nota tal como viene en la fuente original. No la resumas.
-4. LIMPIEZA: Elimina menús, publicidad, banners y frases de suscripción.
-5. EXCLUSIONES: Omitir cualquier nota que mencione a EDUARDO RAMÍREZ.
-6. FECHAS: Solo noticias publicadas entre ${fechaAyer} y ${fechaHoy}.
+REGLAS STRICTAS Y MANDATORIAS:
+1. NUNCA ESCRIBAS "Nota no disponible en el contenido proporcionado", "Sin información" ni frases similares.
+2. SI UN MEDIO SOLO TIENE UN TITULAR O NO TIENE DETALLES, IGNÓRALO Y OMITELO POR COMPLETO. Solo incluye notas donde haya suficiente información para redactar una nota útil.
+3. MÁXIMO 1 O 2 NOTAS POR PORTAL para mantener variedad de fuentes.
+4. MANTIENE EL ESTILO PERIODÍSTICO: Desarrolla el qué, quién, cuándo, dónde y por qué con la información disponible.
+5. OMISIONES: Si hay información sobre EDUARDO RAMÍREZ, OMITIRLA por completo.
+6. FECHAS: Solo noticias de ${fechaAyer} a ${fechaHoy}.
 
-FORMATO OBLIGATORIO PARA CADA NOTA:
-[Nombre del Portal] | [Fecha]
+FORMATO PARA CADA NOTA:
+[Fuente] | [Fecha]
 [TÍTULO EN MAYÚSCULAS]
-[Cuerpo completo del texto de la noticia]
+[Redacción periodística amplia de la nota, lista para leer en voz alta en cabina]
 
 ════════════════════════════════════════
-BLOQUE 2 — NOTICIAS CHIAPAS (NOTAS INTEGRALES)
+BLOQUE 2 — NOTICIAS CHIAPAS
 ════════════════════════════════════════
 ${seccionChiapas}
 
 ════════════════════════════════════════
-BLOQUE 3 — NOTICIAS NACIONALES (NOTAS INTEGRALES)
+BLOQUE 3 — NOTICIAS NACIONALES
 ════════════════════════════════════════
 ${seccionNacionales}`;
 
@@ -202,20 +202,14 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { 
-          role: 'system', 
-          content: 'Eres un editor y curador de noticias de radio. Tu trabajo es filtrar únicamente las notas periodísticas que tengan cuerpo de texto completo, descartando enlaces vacíos o notas sin contenido, manteniendo su redacción original intacta.' 
-        },
+        { role: 'system', content: 'Eres un jefe de redacción de un noticiero de radio. Tu trabajo es tomar la información de los portales y redactar noticias completas y profesionales para el locutor. Jamás pones notas vacías o con leyendas de error.' },
         { role: 'user', content: promptOriginal }
       ],
-      temperature: 0.1,
+      temperature: 0.2,
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ 
-      exito: true, 
-      guion: `GUION ORIGINAL (NOTAS COMPLETAS SIN EDITAR)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
-    });
+    res.json({ exito: true, guion: `GUION INFORMATIVO INTEGRAL\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar guion original.', detalle: error.message });
   }
