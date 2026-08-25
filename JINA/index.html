@@ -96,6 +96,14 @@
       background-color: #bf360c;
     }
 
+    .btn-enlaces {
+      background-color: #6a1b9a;
+    }
+
+    .btn-enlaces:hover {
+      background-color: #4a148c;
+    }
+
     .btn-copiar {
       background-color: #424242;
       display: none;
@@ -201,6 +209,11 @@
         📊 Síntesis de Prensa
       </button>
 
+      <!-- Nuevo Botón para Opción 4 -->
+      <button id="btnEnlaces" class="btn btn-enlaces" onclick="solicitarGuion('/api/sintesis-con-enlaces')">
+        🔗 Síntesis con Enlaces
+      </button>
+
       <button id="btnCopiar" class="btn btn-copiar" onclick="copiarAlPortapapeles()">
         📋 Copiar Contenido
       </button>
@@ -224,6 +237,7 @@
       const btnEditado = document.getElementById('btnEditado');
       const btnOriginal = document.getElementById('btnOriginal');
       const btnSintesis = document.getElementById('btnSintesis');
+      const btnEnlaces = document.getElementById('btnEnlaces');
       const btnCopiar = document.getElementById('btnCopiar');
       const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
@@ -233,6 +247,7 @@
       btnEditado.disabled = true;
       btnOriginal.disabled = true;
       btnSintesis.disabled = true;
+      btnEnlaces.disabled = true;
       loading.style.display = 'block';
       alerta.style.display = 'none';
       salidaGuion.value = '';
@@ -264,6 +279,7 @@
         btnEditado.disabled = false;
         btnOriginal.disabled = false;
         btnSintesis.disabled = false;
+        btnEnlaces.disabled = false;
         loading.style.display = 'none';
       }
     }
