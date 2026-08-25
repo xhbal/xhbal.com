@@ -187,7 +187,7 @@
 
       btn.disabled = true;
       progressBox.style.display = "block";
-      contenedor.innerText = "Consultando portales y procesando con DeepSeek...";
+      contenedor.innerText = "Consultando portales con Jina Reader y redactando con DeepSeek...";
       contenedor.contentEditable = "false";
       document.getElementById("btnEditar").innerText = "Editar";
 
@@ -218,7 +218,6 @@
         if (response.ok && data.exito) {
           actualizarProgreso(100, "¡Guión generado con éxito!");
           
-          // Obtener el número correlativo del día
           const numGuion = obtenerNumeroGuionDia();
           const encabezadoConNumero = `GUIÓN #${numGuion} DEL DÍA\n${data.guion}`;
           
