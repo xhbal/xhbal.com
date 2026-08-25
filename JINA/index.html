@@ -88,9 +88,18 @@
       background-color: #0d47a1;
     }
 
+    .btn-sintesis {
+      background-color: #e65100;
+    }
+
+    .btn-sintesis:hover {
+      background-color: #bf360c;
+    }
+
     .btn-copiar {
       background-color: #424242;
       display: none;
+      flex: 100%;
     }
 
     .btn-copiar:hover {
@@ -188,8 +197,12 @@
         📰 Generar Guión Original
       </button>
 
+      <button id="btnSintesis" class="btn btn-sintesis" onclick="solicitarGuion('/api/sintesis-prensa')">
+        📊 Síntesis de Prensa
+      </button>
+
       <button id="btnCopiar" class="btn btn-copiar" onclick="copiarAlPortapapeles()">
-        📋 Copiar Guión
+        📋 Copiar Contenido
       </button>
     </div>
 
@@ -197,12 +210,12 @@
 
     <div id="loading">
       <div class="spinner"></div>
-      <p id="loadingTexto">Raspando portales de noticias y estructurando el guión...</p>
+      <p id="loadingTexto">Raspando portales de noticias y estructurando el contenido...</p>
       <small style="color: #777;">Este proceso puede tomar entre 30 y 60 segundos.</small>
     </div>
 
     <div class="contenedor-resultado">
-      <textarea id="salidaGuion" placeholder="El guión generado aparecerá en esta área listo para lectura o edición..." readonly></textarea>
+      <textarea id="salidaGuion" placeholder="El contenido generado aparecerá en esta área listo para lectura o edición..." readonly></textarea>
     </div>
   </div>
 
@@ -210,6 +223,7 @@
     async function solicitarGuion(endpoint) {
       const btnEditado = document.getElementById('btnEditado');
       const btnOriginal = document.getElementById('btnOriginal');
+      const btnSintesis = document.getElementById('btnSintesis');
       const btnCopiar = document.getElementById('btnCopiar');
       const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
@@ -218,6 +232,7 @@
       // Interfaz en estado de carga
       btnEditado.disabled = true;
       btnOriginal.disabled = true;
+      btnSintesis.disabled = true;
       loading.style.display = 'block';
       alerta.style.display = 'none';
       salidaGuion.value = '';
@@ -237,9 +252,9 @@
           salidaGuion.value = data.guion;
           salidaGuion.removeAttribute('readonly'); // Permitir que el usuario edite si quiere
           btnCopiar.style.display = 'flex';
-          mostrarAlerta('Guión generado con éxito.', 'exito');
+          mostrarAlerta('Contenido generado con éxito.', 'exito');
         } else {
-          mostrarAlerta(`Error: ${data.error || 'No se pudo generar el guión.'}`, 'error');
+          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar la solicitud.'}`, 'error');
         }
 
       } catch (error) {
@@ -248,6 +263,7 @@
       } finally {
         btnEditado.disabled = false;
         btnOriginal.disabled = false;
+        btnSintesis.disabled = false;
         loading.style.display = 'none';
       }
     }
@@ -262,7 +278,7 @@
 
       navigator.clipboard.writeText(salidaGuion.value)
         .then(() => {
-          mostrarAlerta('¡Guión copiado al portapapeles!', 'exito');
+          mostrarAlerta('¡Contenido copiado al portapapeles!', 'exito');
         })
         .catch(err => {
           mostrarAlerta('No se pudo copiar automáticamente.', 'error');
