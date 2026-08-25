@@ -208,18 +208,29 @@
       }, 1500);
 
       try {
-        const response = await fetch('/api/generar-noticiero', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            seccionLocal: '',
-            seccionChiapas: '',
-            seccionNacionales: ''
-          })
-        });
+  const response = await fetch('/api/generar-noticiero', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    seccionLocal: '',
+    seccionChiapas: '',
+    seccionNacionales: ''
+  })
+});
 
+const data = await response.json();
+
+if (!response.ok || !data.exito) {
+  // Muestra el detalle real del error devuelto por el servidor o DeepSeek
+  contenedor.innerText = `Error del Servidor (${response.status}): ${data.error || ''} \nDetalle: ${data.detalle || 'Sin detalle'}`;
+  actualizarProgreso(100, "Error en el servidor");
+  return;
+}
+
+actualizarProgreso(100, "¡Guión generado con éxito!");
+contenedor.innerText = data.guion;
         clearInterval(intervaloProgreso);
 
         const data = await response.json();
