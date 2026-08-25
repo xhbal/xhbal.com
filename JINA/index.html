@@ -284,7 +284,7 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    // Función que procesa el texto de la Opción 4 y crea tarjetas con botones individuales
+    // Función que procesa el texto de la Opción 4 y crea tarjetas con botones basados en enlaces directos
     function renderizarOpcion4ConBotones(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
@@ -292,37 +292,55 @@
       const lineas = textoGuion.split('\n');
       let htmlAcumulado = '';
       let portalActual = '';
+      let tituloNota = '';
+      let extractoNota = '';
+      let enlaceDirecto = '';
 
       lineas.forEach(linea => {
         linea = linea.trim();
         
-        // Detectar el nombre del portal actual
         if (linea.startsWith('### ')) {
           portalActual = linea.replace('### ', '');
-        } 
-        // Detectar cada noticia individual y generar su botón de búsqueda directa
-        else if (linea.startsWith('- **') || linea.startsWith('- ')) {
-          let tituloNota = linea.replace(/^- \*\*(.*?)\*\*/, '$1').replace(/^- /, '');
-          
-          let urlBusqueda = `https://www.google.com/search?q=${encodeURIComponent(tituloNota + ' ' + portalActual)}`;
-
-          htmlAcumulado += `
-            <div class="tarjeta-noticia">
-              <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">📡 ${portalActual}</small>
-              <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${tituloNota}</h4>
-              <a href="${urlBusqueda}" target="_blank" class="btn-enlace-individual">
-                🔗 Buscar y leer nota completa
-              </a>
-            </div>
-          `;
+        } else if (linea.startsWith('- **') || linea.startsWith('- ')) {
+          if (tituloNota) {
+            let urlFinal = enlaceDirecto || `https://www.google.com/search?q=${encodeURIComponent(tituloNota + ' ' + portalActual)}`;
+            htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, extractoNota, urlFinal);
+            tituloNota = ''; extractoNota = ''; enlaceDirecto = '';
+          }
+          tituloNota = linea.replace(/^- \*\*(.*?)\*\*/, '$1').replace(/^- /, '');
+        } else if (linea.startsWith('**Enlace directo:**') || linea.startsWith('Enlace directo:')) {
+          enlaceDirecto = linea.replace(/\*\*Enlace directo:\*\*/, '').replace('Enlace directo:', '').trim();
+        } else if (linea !== '' && !linea.startsWith('**Enlace:**') && !linea.startsWith('---')) {
+          if (tituloNota && !enlaceDirecto) {
+            extractoNota += linea + ' ';
+          }
         }
       });
+
+      // Guardar la última nota del ciclo
+      if (tituloNota) {
+        let urlFinal = enlaceDirecto || `https://www.google.com/search?q=${encodeURIComponent(tituloNota + ' ' + portalActual)}`;
+        htmlAcumulado += crearTarjetaHTML(portalActual, tituloNota, extractoNota, urlFinal);
+      }
 
       if (htmlAcumulado === '') {
         contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
       } else {
-        contenedor.innerHTML = `<h3 style="margin-bottom: 12px; color: #0f766e;">Monitoreo de Noticias con Acceso Directo</h3>` + htmlAcumulado;
+        contenedor.innerHTML = `<h3 style="margin-bottom: 12px; color: #0f766e;">Monitoreo de Noticias con Enlaces Directos</h3>` + htmlAcumulado;
       }
+    }
+
+    function crearTarjetaHTML(portal, titulo, extracto, url) {
+      return `
+        <div class="tarjeta-noticia">
+          <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">📡 ${portal}</small>
+          <h4 style="font-size: 15px; color: #1e3a8a; margin: 4px 0;">${titulo}</h4>
+          <p style="font-size: 13px; color: #334155; margin-bottom: 6px;">${extracto.trim()}</p>
+          <a href="${url}" target="_blank" class="btn-enlace-individual">
+            🔗 Leer noticia completa
+          </a>
+        </div>
+      `;
     }
 
     async function solicitarGuion(endpoint, esOpcion4) {
