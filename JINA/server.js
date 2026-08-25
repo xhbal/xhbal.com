@@ -159,7 +159,7 @@ ${seccionLocal}
 Formato de cada nota:
 Fuente: Redes Sociales | hora no disponible
 [TÍTULO EN MAYÚSCULAS]
-[Resumen 100 palabras, estilo periodístico]
+[Resumen completo, máximo 200 palabras, estilo periodístico]
 
 ════════════════════════════════════════
 BLOQUE 2 — NOTICIAS CHIAPAS (5 a 10 notas)
@@ -179,7 +179,7 @@ INSTRUCCIONES:
 Formato de cada nota:
 [Fuente] | [Autor o Mesa de Redacción] | [Fecha] | [Hora de publicación]
 [TÍTULO EN MAYÚSCULAS]
-[Resumen 100 palabras, tercera persona, estilo periodístico]
+[Resumen completo, máximo 200 palabras, tercera persona, estilo periodístico]
 
 ════════════════════════════════════════
 BLOQUE 3 — NOTICIAS NACIONALES (10 notas)
@@ -192,12 +192,12 @@ INSTRUCCIONES:
 - USA ÚNICAMENTE los portales entregados en la lista.
 - ESTRICTAMENTE UNA nota por portal.
 - NUNCA dos notas sobre el mismo tema.
-- Cada nota: máximo 100 palabras en una sola línea.
+- Cada nota: máximo 200 palabras, estilo periodístico directo.
 
 Formato de cada nota:
 [Fuente] | [Autor o Mesa de Redacción] | [Fecha] | [Hora de publicación]
 [TÍTULO EN MAYÚSCULAS]
-[Resumen 100 palabras, tercera persona, estilo periodístico]`;
+[Resumen completo, máximo 200 palabras, tercera persona, estilo periodístico]`;
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
 
