@@ -279,7 +279,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA (HTML) - DISEÑO RENOVADO
+// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA (TEXTO ESTRUCTURADO)
 // =========================================================
 app.post('/api/sintesis-con-enlaces', async (req, res) => {
   try {
@@ -321,63 +321,11 @@ ${seccionNacionales}`;
 
     const textoRespuesta = response.data.choices[0].message.content;
 
-    let htmlOutput = `
-      <div style="font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; max-width: 900px; margin: 0 auto; padding: 10px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px;">
-          <h2 style="color: #1e3a8a; margin: 0; font-size: 20px; display: flex; align-items: center; gap: 8px;">
-            <span>📰</span> Síntesis de Prensa Interactiva
-          </h2>
-          <span style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-weight: 500;">${fechaEmision}</span>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
-    `;
-
-    const bloques = textoRespuesta.split(/PORTAL:/i).filter(b => b.trim().length > 0);
-
-    bloques.forEach(bloque => {
-      let lineas = bloque.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      let portalNombre = lineas[0] || "Medio Informativo";
-      
-      let titulo = "";
-      let enlace = "#";
-      let extracto = "";
-
-      lineas.forEach(linea => {
-        if (linea.startsWith("TÍTULO:")) titulo = linea.replace("TÍTULO:", "").trim();
-        if (linea.startsWith("ENLACE:")) enlace = linea.replace("ENLACE:", "").trim();
-        if (linea.startsWith("EXTRACTO:")) extracto = linea.replace("EXTRACTO:", "").trim();
-      });
-
-      if (titulo) {
-        htmlOutput += `
-          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 4px solid #0284c7; border-radius: 6px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s ease;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 11px; font-weight: 700; color: #0f766e; text-transform: uppercase; background: #f0fdfa; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;">📡 ${portalNameCleaner(portalNombre)}</span>
-            </div>
-            <h3 style="font-size: 15px; color: #1e293b; margin: 0 0 8px 0; font-weight: 600; line-height: 1.4;">${titulo}</h3>
-            <p style="font-size: 13px; color: #475569; margin: 0 0 12px 0; line-height: 1.5;">${extracto}</p>
-            <div>
-              <a href="${enlace.startsWith('http') ? enlace : 'https://' + enlace}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background-color: #0284c7; color: white; padding: 7px 14px; border-radius: 5px; text-decoration: none; font-size: 12px; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                <span>🔗</span> Leer noticia completa
-              </a>
-            </div>
-          </div>
-        `;
-      }
+    res.json({ 
+      exito: true, 
+      guion: `SÍNTESIS CON ENLACES (MONITOREO DE MEDIOS)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + textoRespuesta 
     });
-
-    htmlOutput += `</div></div>`;
-
-    res.json({ exito: true, guion: htmlOutput });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
   }
-});
-
-function portalNameCleaner(nombre) {
-  return nombre.replace(/[\[\]]/g, '').trim();
-}
-
-app.listen(port, () => {
-  console.log(`Servidor de XHBAL corriendo en http://localhost:${port}`);
 });
