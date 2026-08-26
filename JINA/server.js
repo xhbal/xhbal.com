@@ -357,6 +357,62 @@ ${seccionNacionales}`;
   }
 });
 
+// =========================================================
+// OPCIÓN 5: GUIÓN POR BLOQUES (URL INDIVIDUAL O ESPECÍFICA)
+// =========================================================
+app.post('/api/procesar-bloque', async (req, res) => {
+  try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
+
+    const { url, nombrePortal } = req.body;
+    if (!url || !nombrePortal) {
+      return res.status(400).json({ exito: false, error: 'Faltan la URL o el nombre del portal.' });
+    }
+
+    const { fechaHoy } = getFechasFiltro();
+    
+    // Raspado enfocado únicamente a esta URL con todo el margen necesario
+    const contenidoPortal = await limpiarConJina(url);
+
+    const promptBloque = `Fecha de hoy: ${fechaHoy}.
+Portal a analizar: ${nombrePortal}
+
+INSTRUCCIONES ESTRICTAS:
+1. Extrae de manera íntegra y completa las notas principales del texto proporcionado para este portal.
+2. NO RECORTES TEXTO: Conserva los párrafos informativos completos, el cuerpo original de la noticia, nombres, lugares y detalles (como menciones locales o entrevistas), sin dejar notas a medias ni usar marcadores de corte.
+3. MÁXIMO DE PALABRAS: Cada nota debe tener un tope de 500 palabras, pero asegurando el máximo desarrollo posible de la información original.
+4. CERO PARÁFRASIS: Respeta el estilo y cuerpo redactado por el medio.
+5. OMISIONES: Descartar de forma absoluta cualquier mención a Eduardo Ramírez, su apodo, siglas "ERA", o al Gobierno de Chiapas.
+
+FORMATO OBLIGATORIO:
+${nombrePortal} | ${fechaHoy}
+[TÍTULO DE LA NOTA EN MAYÚSCULAS]
+[Texto íntegro original con párrafos completos]
+
+CONTENIDO EXTRAÍDO DEL PORTAL:
+${contenidoPortal}`;
+
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un extractor estricto de prensa. Tu objetivo es rescatar las notas con todo su texto íntegro y párrafos completos sin recortes.' },
+        { role: 'user', content: promptBloque }
+      ],
+      temperature: 0.1,
+      max_tokens: 8000 // Todo el poder de los tokens concentrado en este único bloque
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
+
+    res.json({ 
+      exito: true, 
+      guion: response.data.choices[0].message.content 
+    });
+  } catch (error) {
+    res.status(500).json({ exito: false, error: 'Error al procesar el bloque.', detalle: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor corriendo en el puerto ${port}`);
 });
