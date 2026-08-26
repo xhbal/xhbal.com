@@ -169,7 +169,7 @@ Formato de cada nota:
 });
 
 // =========================================================
-// OPCIÓN 2: GUIÓN COMPLETO (FILTRADO Y REDACTADO INTEGRAL)
+// OPCIÓN 2: GUIÓN ÍNTEGRO (FORMATO ORIGINAL SIN REDACCIÓN DE IA)
 // =========================================================
 app.post('/api/generar-guion-original', async (req, res) => {
   try {
@@ -181,18 +181,18 @@ app.post('/api/generar-guion-original', async (req, res) => {
 
     const promptOriginal = `Fecha de hoy: ${fechaHoy}.
 
-INSTRUCCIONES DE SELECCIÓN Y REDACCIÓN:
-1. Revisa los datos extraídos de las noticias de Chiapas y Nacionales.
-2. DISCARD SILENCIOSO: Si una noticia solo tiene un título de 1 línea o no contiene contexto suficiente, DESCÁRTALA POR COMPLETO. No incluyas su encabezado, no incluyas el nombre del portal, ni agregues comentarios aclaratorios.
-3. SELECCIÓN DE CONTENIDO: Selecciona únicamente las 10 a 12 noticias en total (sumando Chiapas y Nacionales) que tengan mejor información sustancial.
-4. REDACCIÓN: Toma el titular y la información disponible para redactar una nota informativa completa de 2 a 3 párrafos para el locutor.
+INSTRUCCIONES DE EXTRACCIÓN Y RESPETO AL FORMATO ORIGINAL:
+1. Analiza los datos extraídos de los portales de Chiapas y Nacionales.
+2. CERO PARÁFRASIS / CERO REDACCIÓN NUEVA: Tu trabajo es extraer la nota tal como viene en el texto original del medio (respetando su cuerpo íntegro, párrafos y estilo original), sin inventar ni reescribir la información.
+3. DISCARTE SILENCIOSO: Si una nota solo tiene un título de 1 línea o no contiene contenido suficiente, DESCÁRTALA POR COMPLETO. No incluyas su encabezado, ni texto aclaratorio.
+4. SELECCIÓN: Selecciona de 10 a 12 notas en total (sumando Chiapas y Nacionales) con mejor información sustancial.
 5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o al Gobierno de Chiapas.
 6. DIVERSIFICACIÓN: Selecciona máximo 1 o 2 notas por medio de comunicación.
 
 FORMATO PERMITIDO ÚNICAMENTE:
 [Nombre del Portal] | [Fecha]
-[TÍTULO EN MAYÚSCULAS]
-[Texto redactado de la noticia en 2 o 3 párrafos listos para lectura]
+[TÍTULO DE LA NOTA EN MAYÚSCULAS]
+[Texto íntegro original de la noticia extraído directamente del medio, sin modificaciones]
 
 ════════════════════════════════════════
 NOTICIAS EXTRAÍDAS DE CHIAPAS:
@@ -208,11 +208,11 @@ ${seccionNacionales}`;
       messages: [
         { 
           role: 'system', 
-          content: 'Eres el productor ejecutivo del noticiero de radio. Tu única tarea es entregar un guión limpio con notas redactadas para aire. Está prohibido escribir frases como "nota no disponible", "sin contenido" o dejar titulares sueltos. Si no hay datos de una nota, la ignoras por completo.' 
+          content: 'Eres un extractor estricto de contenidos de prensa. Tu labor es rescatar la información íntegra y original de los portales de noticias tal como fue publicada, respetando estrictamente el texto original sin parafrasear ni reescribir.' 
         },
         { role: 'user', content: promptOriginal }
       ],
-      temperature: 0.3,
+      temperature: 0.1,
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
@@ -221,7 +221,7 @@ ${seccionNacionales}`;
       guion: response.data.choices[0].message.content 
     });
   } catch (error) {
-    res.status(500).json({ exito: false, error: 'Error al generar guion original.', detalle: error.message });
+    res.status(500).json({ exito: false, error: 'Error al generar guion íntegro.', detalle: error.message });
   }
 });
 
