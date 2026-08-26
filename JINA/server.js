@@ -353,7 +353,7 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
 REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
 PORTAL: [Nombre del Portal]
 TÍTULO: [Título claro de la noticia]
-ENLACE: [URL directa de la noticia. PROHIBIDO incluir enlaces de Google, Yahoo, buscadores o publicidad. Si no tienes la URL exacta de la nota, coloca la URL principal del portal]
+ENLACE: [Coloca la URL principal oficial del portal al que pertenece la nota. PROHIBIDO poner enlaces de Google, Yahoo o buscadores]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
@@ -370,7 +370,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO) sin permitir URLs de buscadores.' },
+        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO) utilizando exclusivamente las URLs oficiales de los medios.' },
         { role: 'user', content: promptOpcion4 }
       ],
       temperature: 0.1,
@@ -379,7 +379,7 @@ ${seccionNacionales}`;
 
     let textoRespuesta = response.data.choices[0].message.content;
 
-    // Filtro post-procesamiento robusto para limpiar cualquier URL basura de Google o buscadores
+    // Filtro post-procesamiento estricto para estandarizar y asegurar URLs limpias y oficiales por portal
     let bloques = textoRespuesta.split(/PORTAL:/i);
     let textoProcesado = bloques.map((bloque, index) => {
       if (index === 0) return bloque;
@@ -389,42 +389,33 @@ ${seccionNacionales}`;
 
       for (let i = 0; i < lineas.length; i++) {
         if (lineas[i].startsWith('ENLACE:')) {
-          let urlActual = lineas[i].replace('ENLACE:', '').trim();
-          
-          // Si el enlace apunta a un buscador, es sospechoso o viene cortado, asignamos la URL oficial del portal
-          if (
-            urlActual.includes('google.com') || 
-            urlActual.includes('search.yahoo') || 
-            urlActual.includes('searchableonline') ||
-            urlActual.length < 10
-          ) {
-            if (nombrePortal.includes('ARISTEGUI')) {
-              lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
-            } else if (nombrePortal.includes('EL HERALDO')) {
-              lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/';
-            } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
-              lineas[i] = 'ENLACE: https://alertachiapas.com/';
-            } else if (nombrePortal.includes('CUARTOPODER')) {
-              lineas[i] = 'ENLACE: https://www.cuartopoder.mx/';
-            } else if (nombrePortal.includes('CHIAPAS PARALELO')) {
-              lineas[i] = 'ENLACE: https://www.chiapasparalelo.com';
-            } else if (nombrePortal.includes('CHIAPAS EN CONTACTO')) {
-              lineas[i] = 'ENLACE: https://chiapasencontacto.com';
-            } else if (nombrePortal.includes('ASICH')) {
-              lineas[i] = 'ENLACE: https://www.asich.com/';
-            } else if (nombrePortal.includes('LA VOZ DEL SURESTE')) {
-              lineas[i] = 'ENLACE: https://diariolavozdelsureste.com/';
-            } else if (nombrePortal.includes('ANIMAL POLÍTICO')) {
-              lineas[i] = 'ENLACE: https://www.animalpolitico.com/';
-            } else if (nombrePortal.includes('PROCESO')) {
-              lineas[i] = 'ENLACE: https://www.proceso.com.mx/';
-            } else if (nombrePortal.includes('LA JORNADA')) {
-              lineas[i] = 'ENLACE: https://www.jornada.com.mx/';
-            } else if (nombrePortal.includes('EL ECONOMISTA')) {
-              lineas[i] = 'ENLACE: https://www.eleconomista.com.mx/';
-            } else if (nombrePortal.includes('EXPANSIÓN')) {
-              lineas[i] = 'ENLACE: https://politica.expansion.mx/';
-            }
+          // Asignación directa y blindada de la URL oficial según el portal detectado
+          if (nombrePortal.includes('ARISTEGUI')) {
+            lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
+          } else if (nombrePortal.includes('EL HERALDO')) {
+            lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/';
+          } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
+            lineas[i] = 'ENLACE: https://alertachiapas.com/';
+          } else if (nombrePortal.includes('CUARTOPODER')) {
+            lineas[i] = 'ENLACE: https://www.cuartopoder.mx/';
+          } else if (nombrePortal.includes('CHIAPAS PARALELO')) {
+            lineas[i] = 'ENLACE: https://www.chiapasparalelo.com';
+          } else if (nombrePortal.includes('CHIAPAS EN CONTACTO')) {
+            lineas[i] = 'ENLACE: https://chiapasencontacto.com';
+          } else if (nombrePortal.includes('ASICH')) {
+            lineas[i] = 'ENLACE: https://www.asich.com/';
+          } else if (nombrePortal.includes('LA VOZ DEL SURESTE')) {
+            lineas[i] = 'ENLACE: https://diariolavozdelsureste.com/';
+          } else if (nombrePortal.includes('ANIMAL POLÍTICO')) {
+            lineas[i] = 'ENLACE: https://www.animalpolitico.com/';
+          } else if (nombrePortal.includes('PROCESO')) {
+            lineas[i] = 'ENLACE: https://www.proceso.com.mx/';
+          } else if (nombrePortal.includes('LA JORNADA')) {
+            lineas[i] = 'ENLACE: https://www.jornada.com.mx/';
+          } else if (nombrePortal.includes('EL ECONOMISTA')) {
+            lineas[i] = 'ENLACE: https://www.eleconomista.com.mx/';
+          } else if (nombrePortal.includes('EXPANSIÓN')) {
+            lineas[i] = 'ENLACE: https://politica.expansion.mx/';
           }
           break;
         }
