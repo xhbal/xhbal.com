@@ -67,10 +67,10 @@ async function limpiarConJina(url, timeoutMs = 15000) {
 
 async function obtenerContenidoPortales() {
   const portalesChiapas = [
-    { nombre: "CUARTO PODER", url: "https://www.cuartopoder.mx" },
+    { nombre: "CUARTO PODER", url: "https://www.cuartopoder.mx/edicionimpresa" },
     { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/" },
-    { nombre: "DIARIO DE CHIAPAS", url: "https://www.diariodechiapas.com" }, // URL original intacta
-    { nombre: "ALERTA CHIAPAS", url: "https://www.alertachiapas.com" },
+    { nombre: "DIARIO DE CHIAPAS", url: "https://www.diariodechiapas.com" },
+    { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com/category/chiapas/" },
     { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com" },
     { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
     { nombre: "DIARIO ULTIMATUM", url: "https://ultimatumchiapas.com.mx" },
@@ -89,7 +89,7 @@ async function obtenerContenidoPortales() {
     { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com/nacional/" },
     { nombre: "REPORTE ÍNDIGO", url: "https://www.reporteindigo.com/reporte/" },
     { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx/nacional" },
-    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/nacional/" },
+    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/economia/" },
     { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
     { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/nacional/" }
   ];
@@ -289,18 +289,17 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
     const fechaEmision = getFechaFormateada();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes y asígnale a CADA una su propio enlace o la URL base del portal si no hay un enlace específico en el texto.
+    const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes.
 
 REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
 PORTAL: [Nombre del Portal]
 TÍTULO: [Título claro de la noticia]
-ENLACE: [URL exacta de la noticia o del portal]
+ENLACE: [URL genérica o específica]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
-1. NO repitas el mismo enlace genérico para todas las notas si el portal ofrece URLs distintas en el contenido; si no hay enlace individual, usa la URL base del portal.
-2. Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
-3. Máximo de 3 a 4 notas destacadas por portal para mantener la síntesis limpia.
+1. Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
+2. Máximo de 3 a 4 notas destacadas por portal para mantener la síntesis limpia.
 
 CONTENIDO DE PORTALES DE CHIAPAS:
 ${seccionChiapas}
@@ -319,13 +318,42 @@ ${seccionNacionales}`;
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    const textoRespuesta = response.data.choices[0].message.content;
+    let textoRespuesta = response.data.choices[0].message.content;
+
+    // Blindaje automático de URLs fijas por medio
+    let bloques = textoRespuesta.split(/PORTAL:/i);
+    let textoProcesado = bloques.map((bloque, index) => {
+      if (index === 0) return bloque;
+
+      let lineas = bloque.split('\n');
+      let nombrePortal = lineas[0].trim().toUpperCase();
+
+      for (let i = 0; i < lineas.length; i++) {
+        if (lineas[i].startsWith('ENLACE:')) {
+          if (nombrePortal.includes('CUARTO PODER')) {
+            lineas[i] = 'ENLACE: https://www.cuartopoder.mx/edicionimpresa';
+          } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
+            lineas[i] = 'ENLACE: https://alertachiapas.com/category/chiapas/';
+          } else if (nombrePortal.includes('EL FINANCIERO')) {
+            lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/economia/';
+          } else if (nombrePortal.includes('HERALDO DE MÉXICO')) {
+            lineas[i] = 'ENLACE: https://heraldodemexico.com.mx/nacional/';
+          }
+          break;
+        }
+      }
+      return 'PORTAL:' + lineas.join('\n');
+    }).join('');
 
     res.json({ 
       exito: true, 
-      guion: `SÍNTESIS CON ENLACES (MONITOREO DE MEDIOS)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + textoRespuesta 
+      guion: `SÍNTESIS CON ENLACES (MONITOREO DE MEDIOS)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + textoProcesado 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });
