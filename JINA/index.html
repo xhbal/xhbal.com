@@ -32,7 +32,7 @@
 
     .container {
       width: 100%;
-      max-width: 1000px;
+      max-width: 100%;
       margin: 0 auto;
       background: var(--card-bg);
       border-radius: 6px;
@@ -138,51 +138,66 @@
     #contenedorOpcion4 {
       display: none;
       width: 100%;
-      background: #fff;
+      overflow-x: auto;
+    }
+
+    /* Estilo de Tabla Tipo Excel */
+    .tabla-excel {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #ffffff;
+      font-size: 12px;
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 12px;
     }
 
-    /* Estilo de lista limpia y continua */
-    .lista-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 15px;
-      padding: 8px 0;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .lista-item:last-child {
-      border-bottom: none;
-    }
-
-    .lista-contenido {
-      flex: 1;
-    }
-
-    .lista-portal {
-      font-size: 10px;
+    .tabla-excel th {
+      background-color: #f1f5f9;
+      color: var(--primary);
       font-weight: 700;
-      color: #0d9488;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: inline-block;
-      margin-bottom: 2px;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--border);
     }
 
-    .lista-titulo {
-      font-size: 13px;
+    .tabla-excel td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      color: var(--text-main);
+    }
+
+    .tabla-excel tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .tabla-excel tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    .badge-portal-tabla {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f766e;
+      background: #f0fdfa;
+      padding: 3px 8px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      border: 1px solid #ccfbf1;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .titulo-tabla {
       font-weight: 700;
       color: var(--primary);
-      line-height: 1.3;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
+      font-size: 13px;
     }
 
-    .lista-extracto {
-      font-size: 11px;
+    .extracto-tabla {
       color: var(--text-muted);
+      font-size: 11px;
       line-height: 1.35;
     }
 
@@ -190,7 +205,7 @@
       background-color: #0284c7;
       color: white;
       text-decoration: none;
-      padding: 4px 10px;
+      padding: 5px 10px;
       border-radius: 3px;
       font-size: 11px;
       font-weight: 600;
@@ -199,7 +214,6 @@
       align-items: center;
       gap: 4px;
       transition: background-color 0.2s;
-      margin-top: 4px;
     }
 
     .btn-enlace-tabla:hover { background-color: #0369a1; }
@@ -261,7 +275,7 @@
 
     <div class="resultado-container">
       <div class="resultado-header">
-        <span id="labelEstado" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Vista de Resultados</span>
+        <span id="labelEstado" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Monitoreo de Noticias (Formato Tabla)</span>
         <button id="btnCopiar" class="btn-secundario" style="display: none;" onclick="copiarAlPortapapeles()">
           📋 Copiar Texto
         </button>
@@ -288,7 +302,7 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    function renderizarOpcion4ComoLista(textoGuion) {
+    function renderizarOpcion4ComoTablaExcel(textoGuion) {
       const contenedor = document.getElementById('contenedorOpcion4');
       contenedor.innerHTML = '';
 
@@ -341,7 +355,17 @@
         return;
       }
 
-      let htmlAcumulado = `<div style="font-size: 13px; font-weight: 700; color: #0f766e; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);">📊 Monitoreo General de Noticias en una Sola Lista</div>`;
+      let tablaHtml = `
+        <table class="tabla-excel">
+          <thead>
+            <tr>
+              <th style="width: 18%;">Medio / Portal</th>
+              <th style="width: 67%;">Titular y Extracto de la Nota</th>
+              <th style="width: 15%; text-align: center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
 
       notas.forEach(nota => {
         let urlLimpia = nota.enlace;
@@ -352,21 +376,28 @@
           urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + nota.portal)}`;
         }
 
-        htmlAcumulado += `
-          <div class="lista-item">
-            <div class="lista-contenido">
-              <span class="lista-portal">${nota.portal}</span>
-              <div class="lista-titulo">${nota.titulo}</div>
-              <div class="lista-extracto">${nota.extracto}</div>
-            </div>
-            <a href="${urlLimpia}" target="_blank" class="btn-enlace-tabla">
-              🔗 Ver nota
-            </a>
-          </div>
+        tablaHtml += `
+          <tr>
+            <td><span class="badge-portal-tabla">📡 ${nota.portal}</span></td>
+            <td>
+              <div class="titulo-tabla">${nota.titulo}</div>
+              <div class="extracto-tabla">${nota.extracto}</div>
+            </td>
+            <td style="text-align: center; vertical-align: middle;">
+              <a href="${urlLimpia}" target="_blank" class="btn-enlace-tabla">
+                🔗 Leer nota
+              </a>
+            </td>
+          </tr>
         `;
       });
 
-      contenedor.innerHTML = htmlAcumulado;
+      tablaHtml += `
+          </tbody>
+        </table>
+      `;
+
+      contenedor.innerHTML = tablaHtml;
     }
 
     async function solicitarGuion(endpoint, esOpcion4) {
@@ -433,7 +464,7 @@
         if (data.exito) {
           if (esOpcion4) {
             contenedorOpcion4.style.display = 'block';
-            renderizarOpcion4ComoLista(data.guion);
+            renderizarOpcion4ComoTablaExcel(data.guion);
             salidaGuion.value = data.guion;
           } else {
             salidaGuion.style.display = 'block';
