@@ -56,9 +56,9 @@ async function limpiarConJina(url, timeoutMs = 30000) {
 
     const texto = response.data || "";
     if (texto.length < 200) {
-      console.log(`⚠️ Advertencia: El feed ${url} devolvió muy poco contenido (posible bloqueo).`);
+      console.log(`⚠️ Advertencia: El portal ${url} devolvió muy poco contenido (posible bloqueo).`);
     }
-    return texto.substring(0, 10000); // Margen amplio para capturar las entradas ordenadas cronológicamente en el RSS
+    return texto.substring(0, 10000); // Margen amplio para capturar las entradas de texto limpio
   } catch (error) {
     console.log(`⚠️ Error/Timeout al consultar ${url}:`, error.message);
     return "Sin información disponible";
@@ -66,33 +66,33 @@ async function limpiarConJina(url, timeoutMs = 30000) {
 }
 
 async function obtenerContenidoPortales() {
-  // Portales actualizados con sus Feeds RSS oficiales para obtener contenido limpio y cronológico
+  // URLs optimizadas a secciones internas o feeds limpios para evitar ruido de portadas
   const portalesChiapas = [
-    { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/rss.xml" },
-    { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com/feed/" },
-    { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com/feed/" },
-    { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com/feed/" },
-    { nombre: "ASICH", url: "https://www.asich.com/rss" },
-    { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/feed/" }
+    { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/" },
+    { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com/category/chiapas/" },
+    { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com" },
+    { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
+    { nombre: "ASICH", url: "https://www.asich.com/portada" },
+    { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" }
   ];
 
   const portalesNacionales = [
-    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/feed/" },
-    { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com/feed" },
-    { nombre: "PROCESO", url: "https://www.proceso.com.mx/feed/" },
-    { nombre: "LA JORNADA", url: "https://www.jornada.com.mx/rss/politica.xml" },
-    { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/rss/politica.xml" },
-    { nombre: "EXPANSIÓN POLÍTICA", url: "https://politica.expansion.mx/rss.xml" }
+    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/mexico/" }, // Sección de México para evitar la portada general
+    { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com" },
+    { nombre: "PROCESO", url: "https://www.proceso.com.mx/nacional/" },
+    { nombre: "LA JORNADA", url: "https://www.jornada.com.mx/categoria/politica" },
+    { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
+    { nombre: "EXPANSIÓN POLÍTICA", url: "https://politica.expansion.mx/" }
   ];
 
-  console.log("Iniciando lectura de Feeds RSS con Jina Reader para Chiapas...");
+  console.log("Iniciando raspado con Jina Reader para Chiapas...");
   const contenidosChiapas = [];
   for (const portal of portalesChiapas) {
     const contenido = await limpiarConJina(portal.url);
     contenidosChiapas.push({ nombre: portal.nombre, contenido });
   }
 
-  console.log("Iniciando lectura de Feeds RSS con Jina Reader para Nacionales...");
+  console.log("Iniciando raspado con Jina Reader para Nacionales...");
   const contenidosNacionales = [];
   for (const portal of portalesNacionales) {
     const contenido = await limpiarConJina(portal.url);
@@ -157,7 +157,7 @@ Formato de cada nota:
 });
 
 // =========================================================
-// OPCIÓN 2: GUIÓN ÍNTEGRO (2 NOTAS ÍNTEGRAS POR SITIO CON REGLA ESTRICTA DE ARISTEGUI)
+// OPCIÓN 2: GUIÓN ÍNTEGRO
 // =========================================================
 app.post('/api/generar-guion-original', async (req, res) => {
   try {
@@ -169,17 +169,17 @@ app.post('/api/generar-guion-original', async (req, res) => {
 
     const promptOriginal = `Fecha de hoy: ${fechaHoy}.
 
-INSTRUCCIONES ESTRICTAS DE EXTRACCIÓN Y CONTENIDO (VÍA RSS):
-1. Los textos provienen de los canales RSS oficiales de los medios (ordenados cronológicamente del más nuevo al más antiguo).
-2. SELECCIÓN ESTRICTA: Extrae exactamente **las 2 notas más nuevas y recientes** de cada feed.
-3. CONTENIDO ÍNTEGRO: Rescata el título completo y el cuerpo/resumen detallado que aparece en la entrada del RSS para cada una de esas 2 notas. No dejes notas incompletas ni uses texto genérico.
+INSTRUCCIONES ESTRICTAS DE EXTRACCIÓN Y CONTENIDO:
+1. Analiza los textos extraídos de cada portal.
+2. SELECCIÓN POR SITIO: Extrae exactamente **2 notas completas** de cada portal que cuente con información desarrollada.
+3. REGLA DE CONTENIDO ÍNTEGRO: Está estrictamente prohibido entregar notas mochadas o con texto insuficiente. Rescata párrafos informativos reales y desarrollados.
 4. LÍMITE DE PALABRAS: Cada nota extraída debe tener un **máximo de 500 palabras**.
 5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o al Gobierno de Chiapas.
 
 FORMATO OBLIGATORIO:
 [Nombre del Portal] | ${fechaHoy}
 [TÍTULO DE LA NOTA EN MAYÚSCULAS]
-[Texto íntegro original obtenido del RSS, máx. 500 palabras]
+[Texto íntegro original de la noticia, máx. 500 palabras]
 
 ════════════════════════════════════════
 NOTICIAS EXTRAÍDAS DE CHIAPAS:
@@ -195,7 +195,7 @@ ${seccionNacionales}`;
       messages: [
         { 
           role: 'system', 
-          content: 'Eres un procesador analítico de feeds RSS de noticias. Tu única tarea es extraer con precisión quirúrgica exactamente las 2 notas más recientes y completas (máximo 500 palabras por nota) de cada medio proporcionado.' 
+          content: 'Eres un extractor estricto de contenidos de prensa. Tu labor es rescatar exactamente 2 notas con su texto íntegro y párrafos completos (máximo 500 palabras por nota).' 
         },
         { role: 'user', content: promptOriginal }
       ],
@@ -229,7 +229,7 @@ OBJETIVO:
 Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para la mesa de trabajo de radio.
 
 REGLAS ESTRICTAS:
-1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido. Muestra únicamente los portales y notas que SÍ tienen extractos reales.
+1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
 2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios con el título y la bajada o extracto disponible.
 3. OMISIONES: Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o el Gobierno de Chiapas.
 
@@ -285,7 +285,7 @@ EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
 1. Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o el Gobierno de Chiapas.
-2. Máximo de 3 a 4 notas destacadas por portal para mantener la síntesis limpia.
+2. Máximo de 3 a 4 notas destacadas por portal.
 
 CONTENIDO DE PORTALES DE CHIAPAS:
 ${seccionChiapas}
@@ -316,12 +316,12 @@ ${seccionNacionales}`;
 
       for (let i = 0; i < lineas.length; i++) {
         if (lineas[i].startsWith('ENLACE:')) {
-          if (nombrePortal.includes('HERALDO DE CHIAPAS')) {
+          if (nombrePortal.includes('EL HERALDO DE CHIAPAS')) {
             lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/local/';
           } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
             lineas[i] = 'ENLACE: https://alertachiapas.com/category/chiapas/';
           } else if (nombrePortal.includes('ARISTEGUI NOTICIAS')) {
-            lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
+            lineas[i] = 'ENLACE: https://aristeguinoticias.com/mexico/';
           } else if (nombrePortal.includes('EXPANSIÓN POLÍTICA')) {
             lineas[i] = 'ENLACE: https://politica.expansion.mx/';
           }
@@ -341,7 +341,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 5: GUIÓN POR BLOQUES (EXTRACCIÓN DIRECTA ÍNTEGRA SIN IA)
+// OPCIÓN 5: GUIÓN POR BLOQUES
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
@@ -351,11 +351,7 @@ app.post('/api/procesar-bloque', async (req, res) => {
     }
 
     const { fechaHoy } = getFechasFiltro();
-    
-    // Extracción directa con Jina Reader sin intervención de IA
     const contenidoPortal = await limpiarConJina(url);
-
-    // Formato directo con el nombre del portal y fecha actual
     const contenidoFinal = `${nombrePortal.toUpperCase()} | ${fechaHoy}\n\n${contenidoPortal}`;
 
     res.json({ 
