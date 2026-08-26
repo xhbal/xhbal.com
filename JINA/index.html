@@ -316,10 +316,25 @@
 
       function guardarNotaActual() {
         if (tituloNota && portalActual) {
+          let enlaceFinal = enlaceNota.replace(/[\[\]]/g, '').trim();
+          const portalLimpio = portalActual.replace(/[\[\]]/g, '').trim();
+          const portalLower = portalLimpio.toLowerCase();
+
+          // Asignación de URLs fijas solicitadas
+          if (portalLower.includes('cuarto poder')) {
+            enlaceFinal = 'https://www.cuartopoder.mx/edicionimpresa';
+          } else if (portalLower.includes('alerta chiapas')) {
+            enlaceFinal = 'https://alertachiapas.com/category/chiapas/';
+          } else if (portalLower.includes('el financiero')) {
+            enlaceFinal = 'https://www.elfinanciero.com.mx/economia/';
+          } else if (portalLower.includes('heraldo de méxico') || portalLower.includes('el heraldo de méxico')) {
+            enlaceFinal = 'https://heraldodemexico.com.mx/nacional/';
+          }
+
           notas.push({
-            portal: portalActual.replace(/[\[\]]/g, '').trim(),
+            portal: portalLimpio,
             titulo: tituloNota.replace(/[\[\]]/g, '').replace(/^[•\-\*]\s*/, '').trim(),
-            enlace: enlaceNota.replace(/[\[\]]/g, '').trim(),
+            enlace: enlaceFinal,
             extracto: extractoNota.replace(/[\[\]]/g, '').trim()
           });
         }
@@ -372,9 +387,21 @@
 
       notas.forEach(nota => {
         let urlLimpia = nota.enlace;
-        if (urlLimpia && !urlLimpia.startsWith('http')) {
+        const portalLower = nota.portal.toLowerCase();
+
+        // Reforzando URLs fijas al renderizar
+        if (portalLower.includes('cuarto poder')) {
+          urlLimpia = 'https://www.cuartopoder.mx/edicionimpresa';
+        } else if (portalLower.includes('alerta chiapas')) {
+          urlLimpia = 'https://alertachiapas.com/category/chiapas/';
+        } else if (portalLower.includes('el financiero')) {
+          urlLimpia = 'https://www.elfinanciero.com.mx/economia/';
+        } else if (portalLower.includes('heraldo de méxico') || portalLower.includes('el heraldo de méxico')) {
+          urlLimpia = 'https://heraldodemexico.com.mx/nacional/';
+        } else if (urlLimpia && !urlLimpia.startsWith('http')) {
           urlLimpia = 'https://' + urlLimpia;
         }
+
         if (!urlLimpia || urlLimpia === 'https://') {
           urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + nota.portal)}`;
         }
