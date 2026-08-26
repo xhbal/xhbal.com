@@ -90,7 +90,7 @@ async function obtenerContenidoPortales() {
     { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com/nacional/" },
     { nombre: "REPORTE ÍNDIGO", url: "https://www.reporteindigo.com/reporte/" },
     { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx/nacional" },
-    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/economia/" },
+    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/nacional/" },
     { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
     { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/nacional/" }
   ];
@@ -128,7 +128,6 @@ app.post('/api/generar-noticiero', async (req, res) => {
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
     const { hoy, fechaHoy, fechaAyer } = getFechasFiltro();
-    const fechaEmision = getFechaFormateada();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
     const prompt = `Hoy es ${hoy}. Fecha exacta: ${fechaHoy}. Rango aceptable: ${fechaAyer} a ${fechaHoy}.
@@ -136,7 +135,7 @@ REGLAS:
 1. Responde a qué, quién, cuándo, cómo, dónde, por qué.
 2. NUNCA inventes noticias. Solo entre ${fechaAyer} y ${fechaHoy}.
 3. NO repitas temas.
-4. OMITIR cualquier nota sobre EDUARDO RAMÍREZ.
+4. OMITIR de manera absoluta cualquier nota que mencione a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
 5. Formato directo, sin palabras de locutor ni introducciones.
 
 BLOQUE 2 — CHIAPAS (5 a 10 notas)
@@ -161,7 +160,7 @@ Formato de cada nota:
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ exito: true, guion: `NOTICIAS CHIAPAS (EDITADO)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content });
+    res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar guion editado.', detalle: error.message });
   }
@@ -175,8 +174,7 @@ app.post('/api/generar-guion-original', async (req, res) => {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const { hoy, fechaHoy, fechaAyer } = getFechasFiltro();
-    const fechaEmision = getFechaFormateada();
+    const { fechaHoy } = getFechasFiltro();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
     const promptOriginal = `Fecha de hoy: ${fechaHoy}.
@@ -186,7 +184,7 @@ INSTRUCCIONES DE SELECCIÓN Y REDACCIÓN:
 2. DISCARD SILENCIOSO: Si una noticia solo tiene un título de 1 línea o no contiene contexto suficiente, DESCÁRTALA POR COMPLETO. No incluyas su encabezado, no incluyas el nombre del portal, ni agregues comentarios aclaratorios.
 3. SELECCIÓN DE CONTENIDO: Selecciona únicamente las 10 a 12 noticias en total (sumando Chiapas y Nacionales) que tengan mejor información sustancial.
 4. REDACCIÓN: Toma el titular y la información disponible para redactar una nota informativa completa de 2 a 3 párrafos para el locutor.
-5. OMISIONES: Si hay menciones a EDUARDO RAMÍREZ, descártalas de inmediato.
+5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o el Gobierno de Chiapas.
 6. DIVERSIFICACIÓN: Selecciona máximo 1 o 2 notas por medio de comunicación.
 
 FORMATO PERMITIDO ÚNICAMENTE:
@@ -218,7 +216,7 @@ ${seccionNacionales}`;
 
     res.json({ 
       exito: true, 
-      guion: `GUION INFORMATIVO EXTENSO DE CABINA\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+      guion: response.data.choices[0].message.content 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar guion original.', detalle: error.message });
@@ -233,8 +231,7 @@ app.post('/api/sintesis-prensa', async (req, res) => {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const { hoy, fechaHoy, fechaAyer } = getFechasFiltro();
-    const fechaEmision = getFechaFormateada();
+    const { fechaHoy } = getFechasFiltro();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
     const promptSintesis = `Fecha de hoy: ${fechaHoy}.
@@ -245,7 +242,7 @@ Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenad
 REGLAS ESTRICTAS:
 1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido. Muestra únicamente los portales y notas que SÍ tienen extractos reales.
 2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios con el título y la bajada o extracto disponible.
-3. OMISIONES: Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
+3. OMISIONES: Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o el Gobierno de Chiapas.
 
 ESTRUCTURA DE SALIDA:
 [Nombre del Portal] | [Fecha]
@@ -272,7 +269,7 @@ ${seccionNacionales}`;
 
     res.json({ 
       exito: true, 
-      guion: `SÍNTESIS DE PRENSA (MONITOREO DE MEDIOS)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + response.data.choices[0].message.content 
+      guion: response.data.choices[0].message.content 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
@@ -287,7 +284,6 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const fechaEmision = getFechaFormateada();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
     const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes.
@@ -299,7 +295,7 @@ ENLACE: [URL genérica o específica]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
-1. Excluye cualquier nota relacionada con EDUARDO RAMÍREZ.
+1. Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o el Gobierno de Chiapas.
 2. Máximo de 3 a 4 notas destacadas por portal para mantener la síntesis limpia.
 
 CONTENIDO DE PORTALES DE CHIAPAS:
@@ -336,7 +332,7 @@ ${seccionNacionales}`;
           } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
             lineas[i] = 'ENLACE: https://alertachiapas.com/category/chiapas/';
           } else if (nombrePortal.includes('EL FINANCIERO')) {
-            lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/economia/';
+            lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/nacional/';
           } else if (nombrePortal.includes('HERALDO DE MÉXICO')) {
             lineas[i] = 'ENLACE: https://heraldodemexico.com.mx/nacional/';
           }
@@ -348,7 +344,7 @@ ${seccionNacionales}`;
 
     res.json({ 
       exito: true, 
-      guion: `SÍNTESIS CON ENLACES (MONITOREO DE MEDIOS)\nGenerado el: ${fechaEmision}\n==========================================\n\n` + textoProcesado 
+      guion: textoProcesado 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
