@@ -90,7 +90,7 @@ async function obtenerContenidoPortales() {
     { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com/nacional/" },
     { nombre: "REPORTE ÍNDIGO", url: "https://www.reporteindigo.com/reporte/" },
     { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx/nacional" },
-    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/nacional/" },
+    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/mercados/" }, // <-- Actualizado a Mercados
     { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
     { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/mundo/" }
   ];
@@ -332,7 +332,7 @@ ${seccionNacionales}`;
           } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
             lineas[i] = 'ENLACE: https://alertachiapas.com/category/chiapas/';
           } else if (nombrePortal.includes('EL FINANCIERO')) {
-            lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/nacional/';
+            lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/mercados/';
           } else if (nombrePortal.includes('HERALDO DE MÉXICO')) {
             lineas[i] = 'ENLACE: https://heraldodemexico.com.mx/mundo/';
           }
