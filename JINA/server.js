@@ -325,7 +325,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA
+// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CACADA NOTA (MEJORADO)
 // =========================================================
 app.post('/api/sintesis-con-enlaces', async (req, res) => {
   try {
@@ -334,12 +334,12 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
 
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes.
+    const promptOpcion4 = `Actúa como analista y extractor de enlaces de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes.
 
 REGLAS ESTRICTAS DE FORMATO (Obligatorio seguir este orden exacto para cada nota):
 PORTAL: [Nombre exacto del portal]
 TÍTULO: [Título claro de la noticia]
-ENLACE: [Copia EXACTAMENTE la URL completa de la nota que aparece en los textos de abajo. NO inventes enlaces ni pongas solo la página principal]
+ENLACE: [Busca la URL de la nota. Si el enlace en el texto es relativo o incompleto, CONSTRÚYELO agregando el dominio principal del portal para que sea una URL absoluta y funcional que abra la nota exacta. NUNCA pongas solo la página principal ni dejes el enlace vacío]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
@@ -356,7 +356,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada estrictamente por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO) conservando las URLs reales de las noticias.' },
+        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO) obligando a reconstruir las URLs absolutas completas de cada nota.' },
         { role: 'user', content: promptOpcion4 }
       ],
       temperature: 0.1,
