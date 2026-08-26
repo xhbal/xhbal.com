@@ -88,6 +88,9 @@
     .btn-opcion-4 { background-color: #0d9488; }
     .btn-opcion-4:hover { background-color: #0f766e; }
 
+    .btn-opcion-5 { background-color: #7c3aed; }
+    .btn-opcion-5:hover { background-color: #6d28d9; }
+
     #loading {
       display: none;
       text-align: center;
@@ -260,6 +263,9 @@
       </button>
       <button id="btnEnlaces" class="btn-opcion-4" onclick="solicitarGuion('/api/sintesis-con-enlaces', true)">
         🔗 Síntesis con Enlaces
+      </button>
+      <button id="btnBloque" class="btn-opcion-5" onclick="generarGuionPorBloques()">
+        ⚡ Bloque URL Única
       </button>
     </div>
 
@@ -435,6 +441,7 @@
       const btnOriginal = document.getElementById('btnOriginal');
       const btnSintesis = document.getElementById('btnSintesis');
       const btnEnlaces = document.getElementById('btnEnlaces');
+      const btnBloque = document.getElementById('btnBloque');
       const btnCopiar = document.getElementById('btnCopiar');
       
       const loading = document.getElementById('loading');
@@ -450,6 +457,7 @@
       btnOriginal.disabled = true;
       btnSintesis.disabled = true;
       btnEnlaces.disabled = true;
+      btnBloque.disabled = true;
 
       loading.style.display = 'block';
       alerta.style.display = 'none';
@@ -462,7 +470,6 @@
       textoPorcentaje.innerText = '0%';
       loadingTexto.innerText = 'Iniciando conexión con los portales de noticias...';
 
-      // Cronometrado a ~65 segundos para llegar al 92% de forma pausada
       const tiempoEstimadoSegundos = 65;
       const totalPasos = (tiempoEstimadoSegundos * 1000) / 650; 
       const incrementoPorPaso = 92 / totalPasos;
@@ -524,6 +531,79 @@
           btnOriginal.disabled = false;
           btnSintesis.disabled = false;
           btnEnlaces.disabled = false;
+          btnBloque.disabled = false;
+          loading.style.display = 'none';
+        }, 800);
+      }
+    }
+
+    async function generarGuionPorBloques() {
+      const btnEditado = document.getElementById('btnEditado');
+      const btnOriginal = document.getElementById('btnOriginal');
+      const btnSintesis = document.getElementById('btnSintesis');
+      const btnEnlaces = document.getElementById('btnEnlaces');
+      const btnBloque = document.getElementById('btnBloque');
+      const btnCopiar = document.getElementById('btnCopiar');
+      
+      const loading = document.getElementById('loading');
+      const salidaGuion = document.getElementById('salidaGuion');
+      const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
+      const alerta = document.getElementById('alerta');
+
+      const barraProgreso = document.getElementById('barraProgreso');
+      const textoPorcentaje = document.getElementById('textoPorcentaje');
+      const loadingTexto = document.getElementById('loadingTexto');
+
+      btnEditado.disabled = true;
+      btnOriginal.disabled = true;
+      btnSintesis.disabled = true;
+      btnEnlaces.disabled = true;
+      btnBloque.disabled = true;
+
+      loading.style.display = 'block';
+      alerta.style.display = 'none';
+      salidaGuion.style.display = 'none';
+      contenedorOpcion4.style.display = 'none';
+      btnCopiar.style.display = 'none';
+
+      barraProgreso.style.width = '50%';
+      textoPorcentaje.innerText = '50%';
+      loadingTexto.innerText = 'Procesando portal de forma individual con texto íntegro...';
+
+      try {
+        const response = await fetch('/api/procesar-bloque', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            url: "https://aristeguinoticias.com/",
+            nombrePortal: "ARISTEGUI NOTICIAS"
+          })
+        });
+
+        const data = await response.json();
+
+        barraProgreso.style.width = '100%';
+        textoPorcentaje.innerText = '100%';
+        loadingTexto.innerText = '¡Proceso por bloque completado!';
+
+        if (data.exito) {
+          salidaGuion.style.display = 'block';
+          salidaGuion.value = data.guion;
+          btnCopiar.style.display = 'flex';
+          mostrarAlerta('Bloque procesado correctamente.', 'exito');
+        } else {
+          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar el bloque.'}`, 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        mostrarAlerta('Error de conexión al procesar el bloque.', 'error');
+      } finally {
+        setTimeout(() => {
+          btnEditado.disabled = false;
+          btnOriginal.disabled = false;
+          btnSintesis.disabled = false;
+          btnEnlaces.disabled = false;
+          btnBloque.disabled = false;
           loading.style.display = 'none';
         }, 800);
       }
