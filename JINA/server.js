@@ -346,63 +346,31 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    // En lugar de mezclar todo, traemos los portales individualmente o estructurados con su URL base clara
-    const portalesChiapas = [
-      { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/" },
-      { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com/category/chiapas/" },
-      { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com" },
-      { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
-      { nombre: "ASICH", url: "https://www.asich.com/portada" },
-      { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" }
-    ];
+    const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const portalesNacionales = [
-      { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" },
-      { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com" },
-      { nombre: "PROCESO", url: "https://www.proceso.com.mx/nacional/" },
-      { nombre: "LA JORNADA", url: "https://www.jornada.com.mx/categoria/politica" },
-      { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
-      { nombre: "EXPANSIÓN POLÍTICA", url: "https://politica.expansion.mx/" }
-    ];
+    const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes.
 
-    // Recolectamos el contenido de cada portal mapeando su URL oficial fija
-    let datosConsolidados = "";
-    
-    for (const portal of portalesChiapas) {
-      const contenido = await limpiarConJina(portal.url);
-      datosConsolidados += `\n=== INICIO PORTAL: ${portal.nombre} ===\nURL_OFICIAL: ${portal.url}\n${contenido}\n=== FIN PORTAL ===\n`;
-    }
-
-    for (const portal of portalesNacionales) {
-      let contenido = "";
-      if (portal.nombre === "ARISTEGUI NOTICIAS") {
-        contenido = await rasparDosNotasAristegui(portal.url);
-      } else {
-        contenido = await limpiarConJina(portal.url);
-      }
-      datosConsolidados += `\n=== INICIO PORTAL: ${portal.nombre} ===\nURL_OFICIAL: ${portal.url}\n${contenido}\n=== FIN PORTAL ===\n`;
-    }
-
-    const promptOpcion4 = `Actúa como analista de noticias. A partir de los bloques de portales proporcionados abajo, extrae las notas más importantes de cada uno.
-
-REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota dentro de su respectivo portal):
-PORTAL: [Nombre exacto del Portal]
+REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
+PORTAL: [Nombre del Portal]
 TÍTULO: [Título claro de la noticia]
-ENLACE: [Copia exactamente la URL_OFICIAL indicada en el bloque del portal]
+ENLACE: [URL oficial o principal del portal correspondiente]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
 1. Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-2. Extrae de 2 a 3 notas destacadas por cada bloque de portal.
+2. Máximo de 3 a 4 notas destacadas por portal.
 
-CONTENIDO DE LOS PORTALES:
-${datosConsolidados}`;
+CONTENIDO DE PORTALES DE CHIAPAS:
+${seccionChiapas}
+
+CONTENIDO DE PORTALES NACIONALES:
+${seccionNacionales}`;
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO) respetando estrictamente los nombres y URLs oficiales proporcionados.' },
+        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO).' },
         { role: 'user', content: promptOpcion4 }
       ],
       temperature: 0.1,
@@ -411,7 +379,7 @@ ${datosConsolidados}`;
 
     let textoRespuesta = response.data.choices[0].message.content;
 
-    // Filtro de seguridad post-procesamiento: forzamos que si el nombre del portal coincide, su enlace sea indiscutiblemente el correcto
+    // Filtro ligero y seguro únicamente para corregir si se coló un enlace de Google
     let bloques = textoRespuesta.split(/PORTAL:/i);
     let textoProcesado = bloques.map((bloque, index) => {
       if (index === 0) return bloque;
@@ -421,32 +389,37 @@ ${datosConsolidados}`;
 
       for (let i = 0; i < lineas.length; i++) {
         if (lineas[i].startsWith('ENLACE:')) {
-          if (nombrePortal.includes('ARISTEGUI')) {
-            lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
-          } else if (nombrePortal.includes('EL HERALDO')) {
-            lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/';
-          } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
-            lineas[i] = 'ENLACE: https://alertachiapas.com/';
-          } else if (nombrePortal.includes('CUARTOPODER')) {
-            lineas[i] = 'ENLACE: https://www.cuartopoder.mx/';
-          } else if (nombrePortal.includes('CHIAPAS PARALELO')) {
-            lineas[i] = 'ENLACE: https://www.chiapasparalelo.com';
-          } else if (nombrePortal.includes('CHIAPAS EN CONTACTO')) {
-            lineas[i] = 'ENLACE: https://chiapasencontacto.com';
-          } else if (nombrePortal.includes('ASICH')) {
-            lineas[i] = 'ENLACE: https://www.asich.com/';
-          } else if (nombrePortal.includes('LA VOZ DEL SURESTE')) {
-            lineas[i] = 'ENLACE: https://diariolavozdelsureste.com/';
-          } else if (nombrePortal.includes('ANIMAL POLÍTICO')) {
-            lineas[i] = 'ENLACE: https://www.animalpolitico.com/';
-          } else if (nombrePortal.includes('PROCESO')) {
-            lineas[i] = 'ENLACE: https://www.proceso.com.mx/';
-          } else if (nombrePortal.includes('LA JORNADA')) {
-            lineas[i] = 'ENLACE: https://www.jornada.com.mx/';
-          } else if (nombrePortal.includes('EL ECONOMISTA')) {
-            lineas[i] = 'ENLace: https://www.eleconomista.com.mx/';
-          } else if (nombrePortal.includes('EXPANSIÓN')) {
-            lineas[i] = 'ENLACE: https://politica.expansion.mx/';
+          let urlActual = lineas[i].replace('ENLACE:', '').trim().toLowerCase();
+          
+          // Solo si trae rastro de buscador lo reemplazamos, de lo contrario respetamos el resultado
+          if (urlActual.includes('google.com') || urlActual.includes('search') || urlActual.length < 8) {
+            if (nombrePortal.includes('ARISTEGUI')) {
+              lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
+            } else if (nombrePortal.includes('EL HERALDO')) {
+              lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/';
+            } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
+              lineas[i] = 'ENLACE: https://alertachiapas.com/';
+            } else if (nombrePortal.includes('CUARTOPODER')) {
+              lineas[i] = 'ENLACE: https://www.cuartopoder.mx/';
+            } else if (nombrePortal.includes('CHIAPAS PARALELO')) {
+              lineas[i] = 'ENLACE: https://www.chiapasparalelo.com';
+            } else if (nombrePortal.includes('CHIAPAS EN CONTACTO')) {
+              lineas[i] = 'ENLACE: https://chiapasencontacto.com';
+            } else if (nombrePortal.includes('ASICH')) {
+              lineas[i] = 'ENLACE: https://www.asich.com/';
+            } else if (nombrePortal.includes('LA VOZ DEL SURESTE')) {
+              lineas[i] = 'ENLACE: https://diariolavozdelsureste.com/';
+            } else if (nombrePortal.includes('ANIMAL POLÍTICO')) {
+              lineas[i] = 'ENLACE: https://www.animalpolitico.com/';
+            } else if (nombrePortal.includes('PROCESO')) {
+              lineas[i] = 'ENLACE: https://www.proceso.com.mx/';
+            } else if (nombrePortal.includes('LA JORNADA')) {
+              lineas[i] = 'ENLACE: https://www.jornada.com.mx/';
+            } else if (nombrePortal.includes('EL ECONOMISTA')) {
+              lineas[i] = 'ENLACE: https://www.eleconomista.com.mx/';
+            } else if (nombrePortal.includes('EXPANSIÓN')) {
+              lineas[i] = 'ENLACE: https://politica.expansion.mx/';
+            }
           }
           break;
         }
