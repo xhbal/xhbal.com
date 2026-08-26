@@ -21,7 +21,7 @@ function getFechaFormateada() {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
-    timeZone: 'America/Mexico_City' // Forzar hora local de México
+    timeZone: 'America/Mexico_City'
   };
   return new Date().toLocaleDateString('es-MX', opciones);
 }
@@ -35,7 +35,7 @@ function getFechasFiltro() {
     day: "numeric",
     timeZone: "America/Mexico_City"
   });
-  const fechaHoy = ahora.toLocaleDateString("sv-SE", { timeZone: "America/Mexico_City" }); // Formato YYYY-MM-DD local
+  const fechaHoy = ahora.toLocaleDateString("sv-SE", { timeZone: "America/Mexico_City" });
   const fechaAyer = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Mexico_City" }));
   fechaAyer.setDate(fechaAyer.getDate() - 2);
   const fechaAyerStr = fechaAyer.toISOString().split("T")[0];
@@ -58,15 +58,34 @@ async function limpiarConJina(url, timeoutMs = 30000) {
     if (texto.length < 200) {
       console.log(`⚠️ Advertencia: El portal ${url} devolvió muy poco contenido (posible bloqueo).`);
     }
-    return texto.substring(0, 10000); // Margen amplio para capturar las entradas de texto limpio
+    return texto.substring(0, 15000); 
   } catch (error) {
     console.log(`⚠️ Error/Timeout al consultar ${url}:`, error.message);
     return "Sin información disponible";
   }
 }
 
+// Función especial para saltar de la portada de Aristegui a la nota individual real
+async function rasparNotaIndividualAristegui(urlPortada) {
+  try {
+    const htmlPortada = await limpiarConJina(urlPortada);
+    
+    // Expresión regular para encontrar la primera URL de noticia interna de Aristegui
+    const matchUrl = htmlPortada.match(/https:\/\/aristeguinoticias.com\/26\d{2}\/[a-z]+\/[^\/\s)]+\//);
+    
+    if (matchUrl && matchUrl[0]) {
+      const urlNotaEspecifica = matchUrl[0];
+      console.log(`🔍 Aristegui detectado. Saltando a la nota individual: ${urlNotaEspecifica}`);
+      return await limpiarConJina(urlNotaEspecifica);
+    }
+    return htmlPortada; 
+  } catch (error) {
+    console.log("Error al procesar nota individual de Aristegui:", error.message);
+    return "Sin información";
+  }
+}
+
 async function obtenerContenidoPortales() {
-  // URLs optimizadas a secciones internas o feeds limpios para evitar ruido de portadas
   const portalesChiapas = [
     { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/" },
     { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com/category/chiapas/" },
@@ -77,7 +96,7 @@ async function obtenerContenidoPortales() {
   ];
 
   const portalesNacionales = [
-    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/mexico/" }, // Sección de México para evitar la portada general
+    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" }, // Mantiene portada y hace el salto automático
     { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com" },
     { nombre: "PROCESO", url: "https://www.proceso.com.mx/nacional/" },
     { nombre: "LA JORNADA", url: "https://www.jornada.com.mx/categoria/politica" },
@@ -95,7 +114,12 @@ async function obtenerContenidoPortales() {
   console.log("Iniciando raspado con Jina Reader para Nacionales...");
   const contenidosNacionales = [];
   for (const portal of portalesNacionales) {
-    const contenido = await limpiarConJina(portal.url);
+    let contenido = "";
+    if (portal.nombre === "ARISTEGUI NOTICIAS") {
+      contenido = await rasparNotaIndividualAristegui(portal.url);
+    } else {
+      contenido = await limpiarConJina(portal.url);
+    }
     contenidosNacionales.push({ nombre: portal.nombre, contenido });
   }
 
@@ -306,7 +330,6 @@ ${seccionNacionales}`;
 
     let textoRespuesta = response.data.choices[0].message.content;
 
-    // Blindaje automático de URLs fijas por medio
     let bloques = textoRespuesta.split(/PORTAL:/i);
     let textoProcesado = bloques.map((bloque, index) => {
       if (index === 0) return bloque;
@@ -321,7 +344,7 @@ ${seccionNacionales}`;
           } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
             lineas[i] = 'ENLACE: https://alertachiapas.com/category/chiapas/';
           } else if (nombrePortal.includes('ARISTEGUI NOTICIAS')) {
-            lineas[i] = 'ENLACE: https://aristeguinoticias.com/mexico/';
+            lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
           } else if (nombrePortal.includes('EXPANSIÓN POLÍTICA')) {
             lineas[i] = 'ENLACE: https://politica.expansion.mx/';
           }
@@ -351,7 +374,14 @@ app.post('/api/procesar-bloque', async (req, res) => {
     }
 
     const { fechaHoy } = getFechasFiltro();
-    const contenidoPortal = await limpiarConJina(url);
+    let contenidoPortal = "";
+    
+    if (nombrePortal.toUpperCase().includes("ARISTEGUI")) {
+      contenidoPortal = await rasparNotaIndividualAristegui(url);
+    } else {
+      contenidoPortal = await limpiarConJina(url);
+    }
+
     const contenidoFinal = `${nombrePortal.toUpperCase()} | ${fechaHoy}\n\n${contenidoPortal}`;
 
     res.json({ 
