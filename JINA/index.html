@@ -326,15 +326,33 @@
           const portalLimpio = portalActual.replace(/[\[\]]/g, '').trim();
           const portalLower = portalLimpio.toLowerCase();
 
-          // Asignación de URLs fijas solicitadas
+          // Asignación de URLs fijas oficiales y limpias por portal
           if (portalLower.includes('cuarto poder')) {
-            enlaceFinal = 'https://www.cuartopoder.mx/edicionimpresa';
+            enlaceFinal = 'https://www.cuartopoder.mx/';
           } else if (portalLower.includes('alerta chiapas')) {
-            enlaceFinal = 'https://alertachiapas.com/category/chiapas/';
-          } else if (portalLower.includes('el financiero')) {
-            enlaceFinal = 'https://www.elfinanciero.com.mx/economia/';
-          } else if (portalLower.includes('heraldo de méxico') || portalLower.includes('el heraldo de méxico')) {
-            enlaceFinal = 'https://heraldodemexico.com.mx/nacional/';
+            enlaceFinal = 'https://alertachiapas.com/';
+          } else if (portalLower.includes('el heraldo de chiapas')) {
+            enlaceFinal = 'https://www.elheraldodechiapas.com.mx/';
+          } else if (portalLower.includes('chiapas paralelo')) {
+            enlaceFinal = 'https://www.chiapasparalelo.com/';
+          } else if (portalLower.includes('chiapas en contacto')) {
+            enlaceFinal = 'https://chiapasencontacto.com/';
+          } else if (portalLower.includes('asich')) {
+            enlaceFinal = 'https://www.asich.com/';
+          } else if (portalLower.includes('la voz del sureste')) {
+            enlaceFinal = 'https://diariolavozdelsureste.com/';
+          } else if (portalLower.includes('aristegui')) {
+            enlaceFinal = 'https://aristeguinoticias.com/';
+          } else if (portalLower.includes('animal político')) {
+            enlaceFinal = 'https://www.animalpolitico.com/';
+          } else if (portalLower.includes('proceso')) {
+            enlaceFinal = 'https://www.proceso.com.mx/';
+          } else if (portalLower.includes('la jornada')) {
+            enlaceFinal = 'https://www.jornada.com.mx/';
+          } else if (portalLower.includes('el economista')) {
+            enlaceFinal = 'https://www.eleconomista.com.mx/';
+          } else if (portalLower.includes('expansión')) {
+            enlaceFinal = 'https://politica.expansion.mx/';
           }
 
           notas.push({
@@ -348,27 +366,28 @@
       }
 
       lineas.forEach(linea => {
-        linea = linea.trim();
-        if (linea.toUpperCase().includes('PORTAL:') || linea.startsWith('📡')) {
+        let lineaTrim = linea.trim();
+        let lineaUpper = lineaTrim.toUpperCase();
+
+        if (lineaUpper.startsWith('PORTAL:')) {
           guardarNotaActual();
-          portalActual = linea.replace(/^PORTAL:/i, '').replace('📡', '').trim();
-        } else if (linea.toUpperCase().startsWith('TÍTULO:') || linea.toUpperCase().startsWith('TITULO:')) {
-          guardarNotaActual();
-          tituloNota = linea.replace(/^TÍTULO:/i, '').replace(/^TITULO:/i, '').trim();
-        } else if (linea.toUpperCase().startsWith('ENLACE:') || linea.includes('Leer noticia completa')) {
-          if (linea.startsWith('http')) enlaceNota = linea;
-        } else if (linea.toUpperCase().startsWith('EXTRACTO:')) {
-          extractoNota = linea.replace(/^EXTRACTO:/i, '').trim();
-        } else if (linea !== '') {
+          portalActual = lineaTrim.replace(/^PORTAL:/i, '').trim();
+        } else if (lineaUpper.startsWith('TÍTULO:') || lineaUpper.startsWith('TITULO:')) {
+          tituloNota = lineaTrim.replace(/^TÍTULO:/i, '').replace(/^TITULO:/i, '').trim();
+        } else if (lineaUpper.startsWith('ENLACE:')) {
+          enlaceNota = lineaTrim.replace(/^ENLACE:/i, '').trim();
+        } else if (lineaUpper.startsWith('EXTRACTO:')) {
+          extractoNota = lineaTrim.replace(/^EXTRACTO:/i, '').trim();
+        } else if (lineaTrim !== '') {
           if (!portalActual) {
             portalActual = "GENERAL";
           }
           if (!tituloNota) {
-            tituloNota = linea;
+            tituloNota = lineaTrim;
           } else if (!extractoNota) {
-            extractoNota = linea;
+            extractoNota = lineaTrim;
           } else {
-            extractoNota += ' ' + linea;
+            extractoNota += ' ' + lineaTrim;
           }
         }
       });
@@ -393,21 +412,9 @@
 
       notas.forEach(nota => {
         let urlLimpia = nota.enlace;
-        const portalLower = nota.portal.toLowerCase();
-
-        // Reforzando URLs fijas al renderizar
-        if (portalLower.includes('cuarto poder')) {
-          urlLimpia = 'https://www.cuartopoder.mx/edicionimpresa';
-        } else if (portalLower.includes('alerta chiapas')) {
-          urlLimpia = 'https://alertachiapas.com/category/chiapas/';
-        } else if (portalLower.includes('el financiero')) {
-          urlLimpia = 'https://www.elfinanciero.com.mx/economia/';
-        } else if (portalLower.includes('heraldo de méxico') || portalLower.includes('el heraldo de méxico')) {
-          urlLimpia = 'https://heraldodemexico.com.mx/nacional/';
-        } else if (urlLimpia && !urlLimpia.startsWith('http')) {
+        if (urlLimpia && !urlLimpia.startsWith('http')) {
           urlLimpia = 'https://' + urlLimpia;
         }
-
         if (!urlLimpia || urlLimpia === 'https://') {
           urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + nota.portal)}`;
         }
