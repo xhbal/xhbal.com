@@ -213,7 +213,7 @@ ${seccionNacionales}`;
         { role: 'user', content: promptOriginal }
       ],
       temperature: 0.1,
-      max_tokens: 20000
+      max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
     res.json({ 
