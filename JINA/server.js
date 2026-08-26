@@ -60,21 +60,29 @@ async function limpiarConJina(url, timeoutMs = 30000) {
     }
 
     // =========================================================
-    // FILTRO ANTIBASURA / ANTI-PUBLICIDAD
+    // FILTRO ANTIBASURA / ANTI-PUBLICIDAD MEJORADO
     // =========================================================
-    const palabrasDeCorte = [
+    const frasesDeCorte = [
       "Temas Relacionados",
+      "Tema Relacionado",
       "Te Recomendamos",
       "Contenido Relacionado",
       "Taboola",
-      "Patrocinado"
+      "Patrocinado",
+      "by Taboola"
     ];
 
-    for (const palabra of palabrasDeCorte) {
-      const indice = texto.indexOf(palabra);
-      if (indice !== -1) {
-        texto = texto.substring(0, indice);
+    let menorIndice = texto.length;
+
+    for (const frase of frasesDeCorte) {
+      const indice = texto.indexOf(frase);
+      if (indice !== -1 && indice < menorIndice) {
+        menorIndice = indice;
       }
+    }
+
+    if (menorIndice < texto.length) {
+      texto = texto.substring(0, menorIndice);
     }
 
     return texto.substring(0, 15000); 
@@ -84,23 +92,45 @@ async function limpiarConJina(url, timeoutMs = 30000) {
   }
 }
 
-// Función especial para saltar de la portada de Aristegui a la nota individual real
-async function rasparNotaIndividualAristegui(urlPortada) {
+// Función automatizada para extraer múltiples notas limpias desde la portada de Aristegui
+async function rasparDosNotasAristegui(urlPortada) {
   try {
+    console.log("🔍 Analizando portada de Aristegui Noticias...");
     const htmlPortada = await limpiarConJina(urlPortada);
     
-    // Expresión regular para encontrar la primera URL de noticia interna de Aristegui
-    const matchUrl = htmlPortada.match(/https:\/\/aristeguinoticias.com\/26\d{2}\/[a-z]+\/[^\/\s)]+\//);
-    
-    if (matchUrl && matchUrl[0]) {
-      const urlNotaEspecifica = matchUrl[0];
-      console.log(`🔍 Aristegui detectado. Saltando a la nota individual: ${urlNotaEspecifica}`);
-      return await limpiarConJina(urlNotaEspecifica);
+    // Expresión regular para encontrar todas las URLs de notas internas de Aristegui (formato /YYMM/seccion/slug/)
+    const regexUrls = /https:\/\/aristeguinoticias.com\/\d{4}\/[a-z]+\/[^\/\s)]+\//g;
+    const matches = htmlPortada.match(regexUrls);
+
+    if (!matches || matches.length === 0) {
+      console.log("⚠️ No se encontraron enlaces de notas en la portada de Aristegui.");
+      return "Sin información de Aristegui Noticias";
     }
-    return htmlPortada; 
+
+    // Filtramos URLs únicas para no repetir
+    const urlsUnicas = [...new Set(matches)];
+    
+    // Tomamos máximo las primeras 2 URLs distintas
+    const urlsAExtraer = urlsUnicas.slice(0, 2);
+    console.log(`🎯 Enlaces principales detectados en Aristegui:`, urlsAExtraer);
+
+    let contenidoDosNotas = "";
+
+    for (let i = 0; i < urlsAExtraer.length; i++) {
+      const urlNota = urlsAExtraer[i];
+      console.log(`📥 Extrayendo nota ${i + 1} de Aristegui: ${urlNota}`);
+      
+      const textoNota = await limpiarConJina(urlNota);
+      contenidoDosNotas += `\n--- NOTA ARISTEGUI ${i + 1} (${urlNota}) ---\n${textoNota}\n`;
+      
+      // Pequeña pausa de cortesía entre peticiones
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    return contenidoDosNotas;
   } catch (error) {
-    console.log("Error al procesar nota individual de Aristegui:", error.message);
-    return "Sin información";
+    console.log("⚠️ Error al procesar notas de Aristegui:", error.message);
+    return "Sin información disponible de Aristegui";
   }
 }
 
@@ -135,7 +165,7 @@ async function obtenerContenidoPortales() {
   for (const portal of portalesNacionales) {
     let contenido = "";
     if (portal.nombre === "ARISTEGUI NOTICIAS") {
-      contenido = await rasparNotaIndividualAristegui(portal.url);
+      contenido = await rasparDosNotasAristegui(portal.url);
     } else {
       contenido = await limpiarConJina(portal.url);
     }
@@ -396,7 +426,7 @@ app.post('/api/procesar-bloque', async (req, res) => {
     let contenidoPortal = "";
     
     if (nombrePortal.toUpperCase().includes("ARISTEGUI")) {
-      contenidoPortal = await rasparNotaIndividualAristegui(url);
+      contenidoPortal = await rasparDosNotasAristegui(url);
     } else {
       contenidoPortal = await limpiarConJina(url);
     }
