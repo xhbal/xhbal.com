@@ -275,7 +275,7 @@
 
     <div class="resultado-container">
       <div class="resultado-header">
-        <span id="labelEstado" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Monitoreo de Noticias (Formato Tabla)</span>
+        <span id="labelEstado" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Monitoreo de Noticias</span>
         <button id="btnCopiar" class="btn-secundario" style="display: none;" onclick="copiarAlPortapapeles()">
           📋 Copiar Texto
         </button>
@@ -328,30 +328,33 @@
 
       lineas.forEach(linea => {
         linea = linea.trim();
-        if (linea.toUpperCase().startsWith('PORTAL:')) {
+        if (linea.toUpperCase().includes('PORTAL:') || linea.startsWith('📡')) {
           guardarNotaActual();
-          portalActual = linea.replace(/^PORTAL:/i, '').replace(/[\[\]]/g, '').trim();
+          portalActual = linea.replace(/^PORTAL:/i, '').replace('📡', '').trim();
         } else if (linea.toUpperCase().startsWith('TÍTULO:') || linea.toUpperCase().startsWith('TITULO:')) {
           guardarNotaActual();
           tituloNota = linea.replace(/^TÍTULO:/i, '').replace(/^TITULO:/i, '').trim();
-        } else if (linea.toUpperCase().startsWith('ENLACE:')) {
-          enlaceNota = linea.replace(/^ENLACE:/i, '').trim();
+        } else if (linea.toUpperCase().startsWith('ENLACE:') || linea.includes('Leer noticia completa')) {
+          if (linea.startsWith('http')) enlaceNota = linea;
         } else if (linea.toUpperCase().startsWith('EXTRACTO:')) {
           extractoNota = linea.replace(/^EXTRACTO:/i, '').trim();
         } else if (linea !== '') {
-          if (extractoNota) {
+          if (!portalActual) {
+            portalActual = "GENERAL";
+          }
+          if (!tituloNota) {
+            tituloNota = linea;
+          } else if (!extractoNota) {
+            extractoNota = linea;
+          } else {
             extractoNota += ' ' + linea;
-          } else if (enlaceNota) {
-            enlaceNota += linea;
-          } else if (tituloNota) {
-            tituloNota += ' ' + linea;
           }
         }
       });
       guardarNotaActual();
 
       if (notas.length === 0) {
-        contenedor.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${textoGuion}</pre>`;
+        contenedor.innerHTML = `<div style="padding: 10px; font-size: 12px; background: #fff;">${textoGuion}</div>`;
         return;
       }
 
@@ -359,8 +362,8 @@
         <table class="tabla-excel">
           <thead>
             <tr>
-              <th style="width: 18%;">Medio / Portal</th>
-              <th style="width: 67%;">Titular y Extracto de la Nota</th>
+              <th style="width: 20%;">Medio / Portal</th>
+              <th style="width: 65%;">Titular y Extracto de la Nota</th>
               <th style="width: 15%; text-align: center;">Acción</th>
             </tr>
           </thead>
@@ -432,21 +435,29 @@
       textoPorcentaje.innerText = '0%';
       loadingTexto.innerText = 'Iniciando conexión con los portales de noticias...';
 
-      const intervaloProgreso = setInterval(() => {
-        if (porcentajeActual < 90) {
-          const incremento = Math.max(1, Math.floor((90 - porcentajeActual) / 12));
-          porcentajeActual += incremento;
-          
-          barraProgreso.style.width = porcentajeActual + '%';
-          textoPorcentaje.innerText = porcentajeActual + '%';
+      // Cronometrado a ~65 segundos para llegar al 92% de forma pausada
+      const tiempoEstimadoSegundos = 65;
+      const totalPasos = (tiempoEstimadoSegundos * 1000) / 650; 
+      const incrementoPorPaso = 92 / totalPasos;
 
-          if (porcentajeActual > 25 && porcentajeActual < 60) {
+      const intervaloProgreso = setInterval(() => {
+        if (porcentajeActual < 92) {
+          porcentajeActual += incrementoPorPaso;
+          if (porcentajeActual > 92) porcentajeActual = 92;
+
+          const porcentajeEntero = Math.floor(porcentajeActual);
+          barraProgreso.style.width = porcentajeEntero + '%';
+          textoPorcentaje.innerText = porcentajeEntero + '%';
+
+          if (porcentajeEntero > 15 && porcentajeEntero < 40) {
             loadingTexto.innerText = 'Extrayendo y limpiando contenidos...';
-          } else if (porcentajeActual >= 60) {
-            loadingTexto.innerText = 'Procesando y redactando...';
+          } else if (porcentajeEntero >= 40 && porcentajeEntero < 75) {
+            loadingTexto.innerText = 'Analizando información y procesando con IA...';
+          } else if (porcentajeEntero >= 75) {
+            loadingTexto.innerText = 'Estructurando tabla y finalizando reporte...';
           }
         }
-      }, 450);
+      }, 650);
 
       try {
         const response = await fetch(endpoint, {
