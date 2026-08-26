@@ -353,11 +353,11 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
 REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
 PORTAL: [Nombre del Portal]
 TÍTULO: [Título claro de la noticia]
-ENLACE: [URL genérica o específica]
+ENLACE: [URL directa de la nota si aparece en el texto, de lo contrario coloca la URL principal del portal correspondiente]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
-1. Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o el Gobierno de Chiapas.
+1. Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
 2. Máximo de 3 a 4 notas destacadas por portal.
 
 CONTENIDO DE PORTALES DE CHIAPAS:
@@ -379,6 +379,7 @@ ${seccionNacionales}`;
 
     let textoRespuesta = response.data.choices[0].message.content;
 
+    // Filtro post-procesamiento para limpiar enlaces de Google o redirecciones no deseadas
     let bloques = textoRespuesta.split(/PORTAL:/i);
     let textoProcesado = bloques.map((bloque, index) => {
       if (index === 0) return bloque;
@@ -388,14 +389,27 @@ ${seccionNacionales}`;
 
       for (let i = 0; i < lineas.length; i++) {
         if (lineas[i].startsWith('ENLACE:')) {
-          if (nombrePortal.includes('EL HERALDO DE CHIAPAS')) {
-            lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/local/';
-          } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
-            lineas[i] = 'ENLACE: https://alertachiapas.com/category/chiapas/';
-          } else if (nombrePortal.includes('ARISTEGUI NOTICIAS')) {
-            lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
-          } else if (nombrePortal.includes('EXPANSIÓN POLÍTICA')) {
-            lineas[i] = 'ENLACE: https://politica.expansion.mx/';
+          let urlActual = lineas[i].replace('ENLACE:', '').trim();
+          
+          // Si el enlace apunta a Google o viene vacío/roto, lo blindamos con la URL oficial del portal o la limpia
+          if (urlActual.includes('google.com') || urlActual.includes('search.yahoo') || urlActual.length < 10) {
+            if (nombrePortal.includes('ARISTEGUI')) {
+              lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
+            } else if (nombrePortal.includes('EL HERALDO')) {
+              lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/';
+            } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
+              lineas[i] = 'ENLACE: https://alertachiapas.com/';
+            } else if (nombrePortal.includes('CUARTOPODER')) {
+              lineas[i] = 'ENLACE: https://www.cuartopoder.mx/';
+            } else if (nombrePortal.includes('ANIMAL POLÍTICO')) {
+              lineas[i] = 'ENLACE: https://www.animalpolitico.com/';
+            } else if (nombrePortal.includes('PROCESO')) {
+              lineas[i] = 'ENLACE: https://www.proceso.com.mx/';
+            } else if (nombrePortal.includes('LA JORNADA')) {
+              lineas[i] = 'ENLACE: https://www.jornada.com.mx/';
+            } else if (nombrePortal.includes('EXPANSIÓN')) {
+              lineas[i] = 'ENLACE: https://politica.expansion.mx/';
+            }
           }
           break;
         }
@@ -411,7 +425,6 @@ ${seccionNacionales}`;
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
   }
 });
-
 // =========================================================
 // OPCIÓN 5: GUIÓN POR BLOQUES
 // =========================================================
