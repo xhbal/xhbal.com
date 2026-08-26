@@ -58,7 +58,7 @@ async function limpiarConJina(url, timeoutMs = 30000) {
     if (texto.length < 200) {
       console.log(`⚠️ Advertencia: El portal ${url} devolvió muy poco contenido (posible bloqueo).`);
     }
-    return texto.substring(0, 6000); // Mayor margen de texto para asegurar párrafos completos
+    return texto.substring(0, 8000); // Mayor margen de texto para capturar los párrafos íntegros
   } catch (error) {
     console.log(`⚠️ Error/Timeout al consultar ${url}:`, error.message);
     return "Sin información disponible";
@@ -169,7 +169,7 @@ Formato de cada nota:
 });
 
 // =========================================================
-// OPCIÓN 2: GUIÓN ÍNTEGRO (2 NOTAS ÍNTEGRAS POR SITIO A FONDO)
+// OPCIÓN 2: GUIÓN ÍNTEGRO (2 NOTAS ÍNTEGRAS POR SITIO CON REGLA ESTRICTA DE ARISTEGUI)
 // =========================================================
 app.post('/api/generar-guion-original', async (req, res) => {
   try {
@@ -181,17 +181,17 @@ app.post('/api/generar-guion-original', async (req, res) => {
 
     const promptOriginal = `Fecha de hoy: ${fechaHoy}.
 
-INSTRUCCIONES DE EXTRACCIÓN Y EXIGENCIA DE CONTENIDO:
+INSTRUCCIONES ESTRICTAS DE EXTRACCIÓN Y CONTENIDO:
 1. Analiza los textos extraídos de cada portal.
-2. SELECCIÓN ESTRICTA POR SITIO: Extrae exactamente **2 notas completas** de cada uno de los portales que tengan información desarrollada disponible.
-3. EXIGENCIA DE TEXTO ÍNTEGRO A FONDO: Está PROHIBIDO entregar notas que solo tengan el titular o una sola línea. Debes rescatar el cuerpo íntegro con sus párrafos informativos originales tal como vienen en el texto extraído. Si un portal solo muestra títulos sueltos sin cuerpo, búscale los fragmentos más extensos o descártalo si no hay de dónde extraer texto real.
-4. CERO PARÁFRASIS: Respeta el estilo y redacción original de la noticia.
+2. SELECCIÓN POR SITIO: Extrae exactamente **2 notas completas** de cada portal que cuente con información desarrollada.
+3. REGLA DE CONTENIDO ÍNTEGRO (Estándar Aristegui): Está estrictamente prohibido entregar notas mochadas, con una sola línea de titular, con marcadores como "[Leer más]" o con texto insuficiente. Debes rescatar el cuerpo íntegro con párrafos informativos reales y desarrollados tal como vienen en el texto extraído. Si un portal solo tiene títulos sueltos sin cuerpo, búscale los fragmentos con más texto o descártalo.
+4. CERO PARÁFRASIS / CERO ETIQUETAS FALSAS: Respeta el cuerpo de texto original del medio, sin inventar texto ni colocar leyendas genéricas.
 5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o al Gobierno de Chiapas.
 
-FORMATO PERMITIDO ÚNICAMENTE:
-[Nombre del Portal] | [Fecha]
+FORMATO OBLIGATORIO:
+[Nombre del Portal] | ${fechaHoy}
 [TÍTULO DE LA NOTA EN MAYÚSCULAS]
-[Texto íntegro original de la noticia extraído directamente del medio, con sus párrafos completos]
+[Texto íntegro original de la noticia con párrafos completos]
 
 ════════════════════════════════════════
 NOTICIAS EXTRAÍDAS DE CHIAPAS:
@@ -207,7 +207,7 @@ ${seccionNacionales}`;
       messages: [
         { 
           role: 'system', 
-          content: 'Eres un extractor estricto de contenidos de prensa. Tu labor es rescatar exactamente 2 notas con su texto íntegro y párrafos originales por cada portal, prohibiendo rotundamente notas vacías o de una sola línea.' 
+          content: 'Eres un extractor estricto de contenidos de prensa. Tu labor es rescatar exactamente 2 notas con su texto íntegro, párrafos completos y estilo original por cada portal, aplicando un filtro estricto para rechazar titulares sueltos o notas vacías.' 
         },
         { role: 'user', content: promptOriginal }
       ],
