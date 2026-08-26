@@ -335,7 +335,7 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
 REGLAS ESTRICTAS DE FORMATO (Obligatorio seguir este orden exacto para cada nota):
 PORTAL: [Nombre exacto del portal]
 TÍTULO: [Título claro de la noticia]
-ENLACE: [URL oficial o principal del portal correspondiente]
+ENLACE: [Copia EXACTAMENTE la URL completa de la nota que aparece en los textos de abajo. NO inventes enlaces ni pongas solo la página principal]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
 
 REQUISITOS:
@@ -352,7 +352,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada estrictamente por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO).' },
+        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada estrictamente por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO) conservando las URLs reales de las noticias.' },
         { role: 'user', content: promptOpcion4 }
       ],
       temperature: 0.1,
