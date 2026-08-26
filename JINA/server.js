@@ -132,7 +132,9 @@ async function obtenerContenidoPortales() {
     { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com" },
     { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
     { nombre: "ASICH", url: "https://www.asich.com/portada" },
-    { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" }
+    { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" },
+    { nombre: "CUARTO PODER", url: "https://www.cuartopoder.mx/chiapas/" },
+    { nombre: "AZTECA NOTICIAS CHIAPAS", url: "https://www.tvazteca.com/aztecanoticias/chiapas" }
   ];
 
   const portalesNacionales = [
@@ -149,6 +151,7 @@ async function obtenerContenidoPortales() {
   for (const portal of portalesChiapas) {
     const contenido = await limpiarConJina(portal.url);
     contenidosChiapas.push({ nombre: portal.nombre, contenido });
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   console.log("Iniciando raspado con Jina Reader para Nacionales...");
@@ -161,6 +164,7 @@ async function obtenerContenidoPortales() {
       contenido = await limpiarConJina(portal.url);
     }
     contenidosNacionales.push({ nombre: portal.nombre, contenido });
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   const seccionChiapas = contenidosChiapas.map(p => `${p.nombre}:\n${p.contenido}`).join("\n\n");
