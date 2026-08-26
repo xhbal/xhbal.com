@@ -184,14 +184,15 @@ app.post('/api/generar-guion-original', async (req, res) => {
 INSTRUCCIONES ESTRICTAS DE EXTRACCIÓN Y CONTENIDO:
 1. Analiza los textos extraídos de cada portal.
 2. SELECCIÓN POR SITIO: Extrae exactamente **2 notas completas** de cada portal que cuente con información desarrollada.
-3. REGLA DE CONTENIDO ÍNTEGRO (Estándar Aristegui): Está estrictamente prohibido entregar notas mochadas, con una sola línea de titular, con marcadores como "[Leer más]" o con texto insuficiente. Debes rescatar el cuerpo íntegro con párrafos informativos reales y desarrollados tal como vienen en el texto extraído. Si un portal solo tiene títulos sueltos sin cuerpo, búscale los fragmentos con más texto o descártalo.
-4. CERO PARÁFRASIS / CERO ETIQUETAS FALSAS: Respeta el cuerpo de texto original del medio, sin inventar texto ni colocar leyendas genéricas.
-5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o al Gobierno de Chiapas.
+3. REGLA DE CONTENIDO ÍNTEGRO (Estándar Aristegui): Está estrictamente prohibido entregar notas mochadas, con una sola línea de titular, con marcadores como "[Leer más]" o con texto insuficiente. Debes rescatar el cuerpo íntegro con párrafos informativos reales y desarrollados tal como vienen en el texto extraído.
+4. LÍMITE DE PALABRAS: Cada nota extraída debe tener un **máximo de 500 palabras** (si es más extensa, córtala coherentemente o prioriza los párrafos clave hasta ese tope).
+5. CERO PARÁFRASIS / CERO ETIQUETAS FALSAS: Respeta el cuerpo de texto original del medio, sin inventar texto ni colocar leyendas genéricas.
+6. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o al Gobierno de Chiapas.
 
 FORMATO OBLIGATORIO:
 [Nombre del Portal] | ${fechaHoy}
 [TÍTULO DE LA NOTA EN MAYÚSCULAS]
-[Texto íntegro original de la noticia con párrafos completos]
+[Texto íntegro original de la noticia con párrafos completos, máx. 500 palabras]
 
 ════════════════════════════════════════
 NOTICIAS EXTRAÍDAS DE CHIAPAS:
@@ -207,7 +208,7 @@ ${seccionNacionales}`;
       messages: [
         { 
           role: 'system', 
-          content: 'Eres un extractor estricto de contenidos de prensa. Tu labor es rescatar exactamente 2 notas con su texto íntegro, párrafos completos y estilo original por cada portal, aplicando un filtro estricto para rechazar titulares sueltos o notas vacías.' 
+          content: 'Eres un extractor estricto de contenidos de prensa. Tu labor es rescatar exactamente 2 notas con su texto íntegro, párrafos completos (máximo 500 palabras por nota) y estilo original por cada portal.' 
         },
         { role: 'user', content: promptOriginal }
       ],
