@@ -126,24 +126,37 @@ async function rasparDosNotasAristegui(urlPortada) {
 }
 
 async function obtenerContenidoPortales() {
+  // Integrando todos los portales estatales del código viejo
   const portalesChiapas = [
-    { nombre: "EL HERALDO DE CHIAPAS", url: "https://www.elheraldodechiapas.com.mx/local/" },
-    { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com/category/chiapas/" },
-    { nombre: "CHIAPAS PARALELO", url: "https://www.chiapasparalelo.com" },
+    { nombre: "CUARTO PODER", url: "https://cuartopoder.mx" },
+    { nombre: "EL HERALDO DE CHIAPAS", url: "https://elheraldodechiapas.com.mx" },
+    { nombre: "DIARIO DE CHIAPAS", url: "https://diariodechiapas.com" },
+    { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com" },
+    { nombre: "CHIAPAS PARALELO", url: "https://chiapasparalelo.com" },
     { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
+    { nombre: "DIARIO ULTIMATUM", url: "https://ultimatumchiapas.com.mx" },
+    { nombre: "EL ORBE", url: "https://elorbe.com" },
     { nombre: "ASICH", url: "https://www.asich.com/portada" },
-    { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" },
-    { nombre: "CUARTO PODER", url: "https://www.cuartopoder.mx/chiapas/" },
-    { nombre: "AZTECA NOTICIAS CHIAPAS", url: "https://www.tvazteca.com/aztecanoticias/chiapas" }
+    { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" }
   ];
 
+  // Integrando todos los portales nacionales del código viejo
   const portalesNacionales = [
     { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" },
+    { nombre: "MILENIO", url: "https://milenio.com" },
+    { nombre: "EL UNIVERSAL", url: "https://eluniversal.com.mx" },
+    { nombre: "INFOBAE MÉXICO", url: "https://infobae.com/mexico" },
+    { nombre: "PROCESO", url: "https://proceso.com.mx" },
     { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com" },
-    { nombre: "PROCESO", url: "https://www.proceso.com.mx/nacional/" },
-    { nombre: "LA JORNADA", url: "https://www.jornada.com.mx/categoria/politica" },
-    { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
-    { nombre: "EXPANSIÓN POLÍTICA", url: "https://politica.expansion.mx/" }
+    { nombre: "LA JORNADA", url: "https://www.jornada.com.mx" },
+    { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com" },
+    { nombre: "REPORTE ÍNDIGO", url: "https://reporteindigo.com" },
+    { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx" },
+    { nombre: "EL NORTE", url: "https://www.elnorte.com" },
+    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx" },
+    { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx" },
+    { nombre: "CODIGO MAGENTA", url: "https://codigomagenta.com.mx" },
+    { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/noticias/" }
   ];
 
   console.log("Iniciando raspado con Jina Reader para Chiapas...");
@@ -325,7 +338,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CACADA NOTA (MEJORADO)
+// OPCIÓN 4: SÍNTESIS CON ENLACES DIRECTOS A CADA NOTA
 // =========================================================
 app.post('/api/sintesis-con-enlaces', async (req, res) => {
   try {
