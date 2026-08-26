@@ -92,7 +92,7 @@ async function obtenerContenidoPortales() {
     { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx/nacional" },
     { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/nacional/" },
     { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
-    { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/nacional/" }
+    { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/mundo/" }
   ];
 
   console.log("Iniciando raspado con Jina Reader para Chiapas...");
@@ -334,7 +334,7 @@ ${seccionNacionales}`;
           } else if (nombrePortal.includes('EL FINANCIERO')) {
             lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/nacional/';
           } else if (nombrePortal.includes('HERALDO DE MÉXICO')) {
-            lineas[i] = 'ENLACE: https://heraldodemexico.com.mx/nacional/';
+            lineas[i] = 'ENLACE: https://heraldodemexico.com.mx/mundo/';
           }
           break;
         }
