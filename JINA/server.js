@@ -90,9 +90,12 @@ async function obtenerContenidoPortales() {
     { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com/nacional/" },
     { nombre: "REPORTE ÍNDIGO", url: "https://www.reporteindigo.com/reporte/" },
     { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx/nacional" },
-    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/mercados/" }, // <-- Actualizado a Mercados
+    { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx/mercados/" },
     { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx/politica" },
-    { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/mundo/" }
+    { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/mundo/" },
+    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" },
+    { nombre: "LA RAZÓN", url: "https://www.razon.com.mx/" },
+    { nombre: "EXPANSIÓN POLÍTICA", url: "https://politica.expansion.mx/" }
   ];
 
   console.log("Iniciando raspado con Jina Reader para Chiapas...");
@@ -184,7 +187,7 @@ INSTRUCCIONES DE SELECCIÓN Y REDACCIÓN:
 2. DISCARD SILENCIOSO: Si una noticia solo tiene un título de 1 línea o no contiene contexto suficiente, DESCÁRTALA POR COMPLETO. No incluyas su encabezado, no incluyas el nombre del portal, ni agregues comentarios aclaratorios.
 3. SELECCIÓN DE CONTENIDO: Selecciona únicamente las 10 a 12 noticias en total (sumando Chiapas y Nacionales) que tengan mejor información sustancial.
 4. REDACCIÓN: Toma el titular y la información disponible para redactar una nota informativa completa de 2 a 3 párrafos para el locutor.
-5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o el Gobierno de Chiapas.
+5. OMISIONES: Descartar de inmediato y de forma absoluta cualquier mención a Eduardo Ramírez, el apodo o siglas "ERA", o al Gobierno de Chiapas.
 6. DIVERSIFICACIÓN: Selecciona máximo 1 o 2 notas por medio de comunicación.
 
 FORMATO PERMITIDO ÚNICAMENTE:
@@ -335,6 +338,12 @@ ${seccionNacionales}`;
             lineas[i] = 'ENLACE: https://www.elfinanciero.com.mx/mercados/';
           } else if (nombrePortal.includes('HERALDO DE MÉXICO')) {
             lineas[i] = 'ENLACE: https://heraldodemexico.com.mx/mundo/';
+          } else if (nombrePortal.includes('ARISTEGUI NOTICIAS')) {
+            lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
+          } else if (nombrePortal.includes('LA RAZÓN')) {
+            lineas[i] = 'ENLACE: https://www.razon.com.mx/';
+          } else if (nombrePortal.includes('EXPANSIÓN POLÍTICA')) {
+            lineas[i] = 'ENLACE: https://politica.expansion.mx/';
           }
           break;
         }
