@@ -59,9 +59,6 @@ async function limpiarConJina(url, timeoutMs = 30000) {
       console.log(`⚠️ Advertencia: El portal ${url} devolvió muy poco contenido (posible bloqueo).`);
     }
 
-    // =========================================================
-    // FILTRO ANTIBASURA / ANTI-PUBLICIDAD MEJORADO
-    // =========================================================
     const frasesDeCorte = [
       "Temas Relacionados",
       "Tema Relacionado",
@@ -92,13 +89,11 @@ async function limpiarConJina(url, timeoutMs = 30000) {
   }
 }
 
-// Función automatizada para extraer múltiples notas limpias desde la portada de Aristegui
 async function rasparDosNotasAristegui(urlPortada) {
   try {
     console.log("🔍 Analizando portada de Aristegui Noticias...");
     const htmlPortada = await limpiarConJina(urlPortada);
     
-    // Expresión regular para encontrar todas las URLs de notas internas de Aristegui (formato /YYMM/seccion/slug/)
     const regexUrls = /https:\/\/aristeguinoticias.com\/\d{4}\/[a-z]+\/[^\/\s)]+\//g;
     const matches = htmlPortada.match(regexUrls);
 
@@ -107,10 +102,7 @@ async function rasparDosNotasAristegui(urlPortada) {
       return "Sin información de Aristegui Noticias";
     }
 
-    // Filtramos URLs únicas para no repetir
     const urlsUnicas = [...new Set(matches)];
-    
-    // Tomamos máximo las primeras 2 URLs distintas
     const urlsAExtraer = urlsUnicas.slice(0, 2);
     console.log(`🎯 Enlaces principales detectados en Aristegui:`, urlsAExtraer);
 
@@ -123,7 +115,6 @@ async function rasparDosNotasAristegui(urlPortada) {
       const textoNota = await limpiarConJina(urlNota);
       contenidoDosNotas += `\n--- NOTA ARISTEGUI ${i + 1} (${urlNota}) ---\n${textoNota}\n`;
       
-      // Pequeña pausa de cortesía entre peticiones
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
@@ -303,36 +294,27 @@ Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenad
 
 REGLAS ESTRICTAS:
 1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
-2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios con el título y la bajada o extracto disponible.
-3. OMISIONES: Excluye de manera absoluta cualquier nota relacionada con Eduardo Ramírez, su apodo o siglas "ERA", o el Gobierno de Chiapas.
+2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios de notas.
+3. OMISIONES: Excluye de manera absoluta cualquier nota o mención sobre Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
 
-ESTRUCTURA DE SALIDA:
-[Nombre del Portal] | [Fecha]
-- TÍTULO DE LA NOTA: Extracto o descripción disponible.
-
-════════════════════════════════════════
-PORTALES DE CHIAPAS:
+CONTENIDO DE CHIAPAS:
 ${seccionChiapas}
 
-════════════════════════════════════════
-PORTALES NACIONALES:
+CONTENIDO NACIONAL:
 ${seccionNacionales}`;
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios y jefe de prensa. Compilas monitoreos de prensa limpios, precisos y directos.' },
+        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y monitoreo de prensa radial.' },
         { role: 'user', content: promptSintesis }
       ],
       temperature: 0.1,
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ 
-      exito: true, 
-      guion: response.data.choices[0].message.content 
-    });
+    res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
   }
@@ -350,8 +332,8 @@ app.post('/api/sintesis-con-enlaces', async (req, res) => {
 
     const promptOpcion4 = `Actúa como analista de noticias. A partir de los textos de los portales proporcionados abajo, extrae las notas más importantes.
 
-REGLAS ESTRICTAS DE FORMATO (Debes seguir este orden exacto para cada nota):
-PORTAL: [Nombre del Portal]
+REGLAS ESTRICTAS DE FORMATO (Obligatorio seguir este orden exacto para cada nota):
+PORTAL: [Nombre exacto del portal]
 TÍTULO: [Título claro de la noticia]
 ENLACE: [URL oficial o principal del portal correspondiente]
 EXTRACTO: [Resumen breve de 1 o 2 líneas]
@@ -370,7 +352,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO).' },
+        { role: 'system', content: 'Eres un sistema estricto de extracción de datos que devuelve la información estructurada estrictamente por campos (PORTAL, TÍTULO, ENLACE, EXTRACTO).' },
         { role: 'user', content: promptOpcion4 }
       ],
       temperature: 0.1,
@@ -379,92 +361,48 @@ ${seccionNacionales}`;
 
     let textoRespuesta = response.data.choices[0].message.content;
 
-    // Filtro ligero y seguro únicamente para corregir si se coló un enlace de Google
-    let bloques = textoRespuesta.split(/PORTAL:/i);
-    let textoProcesado = bloques.map((bloque, index) => {
-      if (index === 0) return bloque;
-
-      let lineas = bloque.split('\n');
-      let nombrePortal = lineas[0].trim().toUpperCase();
-
-      for (let i = 0; i < lineas.length; i++) {
-        if (lineas[i].startsWith('ENLACE:')) {
-          let urlActual = lineas[i].replace('ENLACE:', '').trim().toLowerCase();
-          
-          // Solo si trae rastro de buscador lo reemplazamos, de lo contrario respetamos el resultado
-          if (urlActual.includes('google.com') || urlActual.includes('search') || urlActual.length < 8) {
-            if (nombrePortal.includes('ARISTEGUI')) {
-              lineas[i] = 'ENLACE: https://aristeguinoticias.com/';
-            } else if (nombrePortal.includes('EL HERALDO')) {
-              lineas[i] = 'ENLACE: https://www.elheraldodechiapas.com.mx/';
-            } else if (nombrePortal.includes('ALERTA CHIAPAS')) {
-              lineas[i] = 'ENLACE: https://alertachiapas.com/';
-            } else if (nombrePortal.includes('CUARTOPODER')) {
-              lineas[i] = 'ENLACE: https://www.cuartopoder.mx/';
-            } else if (nombrePortal.includes('CHIAPAS PARALELO')) {
-              lineas[i] = 'ENLACE: https://www.chiapasparalelo.com';
-            } else if (nombrePortal.includes('CHIAPAS EN CONTACTO')) {
-              lineas[i] = 'ENLACE: https://chiapasencontacto.com';
-            } else if (nombrePortal.includes('ASICH')) {
-              lineas[i] = 'ENLACE: https://www.asich.com/';
-            } else if (nombrePortal.includes('LA VOZ DEL SURESTE')) {
-              lineas[i] = 'ENLACE: https://diariolavozdelsureste.com/';
-            } else if (nombrePortal.includes('ANIMAL POLÍTICO')) {
-              lineas[i] = 'ENLACE: https://www.animalpolitico.com/';
-            } else if (nombrePortal.includes('PROCESO')) {
-              lineas[i] = 'ENLACE: https://www.proceso.com.mx/';
-            } else if (nombrePortal.includes('LA JORNADA')) {
-              lineas[i] = 'ENLACE: https://www.jornada.com.mx/';
-            } else if (nombrePortal.includes('EL ECONOMISTA')) {
-              lineas[i] = 'ENLACE: https://www.eleconomista.com.mx/';
-            } else if (nombrePortal.includes('EXPANSIÓN')) {
-              lineas[i] = 'ENLACE: https://politica.expansion.mx/';
-            }
-          }
-          break;
-        }
-      }
-      return 'PORTAL:' + lineas.join('\n');
-    }).join('');
-
     res.json({ 
       exito: true, 
-      guion: textoProcesado 
+      guion: textoRespuesta 
     });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con enlaces.', detalle: error.message });
   }
 });
+
 // =========================================================
-// OPCIÓN 5: GUIÓN POR BLOQUES
+// OPCIÓN 5: BLOQUE URL ÚNICA (PROCESAMIENTO INDIVIDUAL)
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
+
     const { url, nombrePortal } = req.body;
-    if (!url || !nombrePortal) {
-      return res.status(400).json({ exito: false, error: 'Faltan la URL o el nombre del portal.' });
-    }
+    const contenidoPortal = await limpiarConJina(url || "https://aristeguinoticias.com/");
+    const nombre = nombrePortal || "ARISTEGUI NOTICIAS";
 
-    const { fechaHoy } = getFechasFiltro();
-    let contenidoPortal = "";
-    
-    if (nombrePortal.toUpperCase().includes("ARISTEGUI")) {
-      contenidoPortal = await rasparDosNotasAristegui(url);
-    } else {
-      contenidoPortal = await limpiarConJina(url);
-    }
+    const promptBloque = `Analiza el contenido del siguiente portal (${nombre}) y genera un resumen estructurado para radio.
+Contenido:
+${contenidoPortal}`;
 
-    const contenidoFinal = `${nombrePortal.toUpperCase()} | ${fechaHoy}\n\n${contenidoPortal}`;
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un redactor analítico de noticias.' },
+        { role: 'user', content: promptBloque }
+      ],
+      temperature: 0.2,
+      max_tokens: 4000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
 
-    res.json({ 
-      exito: true, 
-      guion: contenidoFinal 
-    });
+    res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al procesar el bloque.', detalle: error.message });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
+  console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
 });
