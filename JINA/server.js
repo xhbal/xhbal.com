@@ -54,10 +54,29 @@ async function limpiarConJina(url, timeoutMs = 30000) {
       }
     });
 
-    const texto = response.data || "";
+    let texto = response.data || "";
     if (texto.length < 200) {
       console.log(`⚠️ Advertencia: El portal ${url} devolvió muy poco contenido (posible bloqueo).`);
     }
+
+    // =========================================================
+    // FILTRO ANTIBASURA / ANTI-PUBLICIDAD
+    // =========================================================
+    const palabrasDeCorte = [
+      "Temas Relacionados",
+      "Te Recomendamos",
+      "Contenido Relacionado",
+      "Taboola",
+      "Patrocinado"
+    ];
+
+    for (const palabra of palabrasDeCorte) {
+      const indice = texto.indexOf(palabra);
+      if (indice !== -1) {
+        texto = texto.substring(0, indice);
+      }
+    }
+
     return texto.substring(0, 15000); 
   } catch (error) {
     console.log(`⚠️ Error/Timeout al consultar ${url}:`, error.message);
@@ -96,7 +115,7 @@ async function obtenerContenidoPortales() {
   ];
 
   const portalesNacionales = [
-    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" }, // Mantiene portada y hace el salto automático
+    { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" },
     { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com" },
     { nombre: "PROCESO", url: "https://www.proceso.com.mx/nacional/" },
     { nombre: "LA JORNADA", url: "https://www.jornada.com.mx/categoria/politica" },
