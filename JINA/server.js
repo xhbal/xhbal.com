@@ -126,7 +126,6 @@ async function rasparDosNotasAristegui(urlPortada) {
 }
 
 async function obtenerContenidoPortales() {
-  // Integrando todos los portales estatales del código viejo
   const portalesChiapas = [
     { nombre: "CUARTO PODER", url: "https://cuartopoder.mx" },
     { nombre: "EL HERALDO DE CHIAPAS", url: "https://elheraldodechiapas.com.mx" },
@@ -140,7 +139,6 @@ async function obtenerContenidoPortales() {
     { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" }
   ];
 
-  // Integrando todos los portales nacionales del código viejo
   const portalesNacionales = [
     { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" },
     { nombre: "MILENIO", url: "https://milenio.com" },
@@ -388,7 +386,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 5: BARRIDO INTELIGENTE DE 25 PORTALES (VERSIÓN DEFINITIVA)
+// OPCIÓN 5: BARRIDO INTELIGENTE DE LOS 25 PORTALES
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
@@ -436,11 +434,9 @@ app.post('/api/procesar-bloque', async (req, res) => {
       console.log(`🔍 [${i + 1}/25] Procesando portal: ${portal.nombre}`);
 
       try {
-        // 1. Jina extrae la portada
         const contenidoPortada = await limpiarConJina(portal.url);
         if (!contenidoPortada || contenidoPortada.length < 150) continue;
 
-        // 2. DeepSeek selecciona la URL de la nota principal de ESTE portal
         const promptSeleccion = `Estás analizando la portada del medio "${portal.nombre}". 
 Selecciona UNA SOLA NOTA que sea la más importante de este portal y extrae su URL absoluta.
 Responde estrictamente con el formato:
@@ -463,8 +459,6 @@ ${contenidoPortada}`;
 
         if (matchUrl && matchUrl[1]) {
           const urlNota = matchUrl[1].trim();
-          
-          // 3. Jina extrae el texto íntegro de esa nota específica
           const textoNota = await limpiarConJina(urlNota);
 
           if (textoNota && textoNota.length > 200) {
@@ -493,12 +487,11 @@ ${contenidoPortada}`;
       `MEDIO: ${n.portal}\nENLACE: ${n.url}\nTEXTO COMPLETO:\n${n.contenido}\n----------------------------------------`
     ).join("\n\n");
 
-    // 4. Redacción final exigiendo que aparezcan todos los medios procesados
     const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
 REGLAS ESTRICTAS:
 1. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-2. Presenta un reporte de monitoreo estructurado donde se desglose la información recopilada de los diferentes medios analizados (tanto estatales como nacionales), asegurando que se refleje la diversidad de los portales y no uno solo.
+2. Presenta un reporte de monitoreo estructurado donde se desglose la información recopilada de los diferentes medios analizados, asegurando que se refleje la diversidad de los portales.
 3. Formato limpio por cada medio:
 [NOMBRE DEL MEDIO]
 - Título y síntesis desarrollada de la nota extraída.
@@ -527,4 +520,8 @@ ${corpusGeneral}`;
     console.log("❌ Error en Barrido de Portales:", error.message);
     res.status(500).json({ exito: false, error: 'Error al procesar el barrido.', detalle: error.message });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });
