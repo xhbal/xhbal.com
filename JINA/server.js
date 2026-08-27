@@ -388,7 +388,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 5: BLOQUE URL ÚNICA (PROCESAMIENTO INDIVIDUAL)
+// OPCIÓN 5: SELECCIÓN INTELIGENTE DE NOTA Y PROCESAMIENTO PROFUNDO
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
@@ -396,30 +396,82 @@ app.post('/api/procesar-bloque', async (req, res) => {
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
     const { url, nombrePortal } = req.body;
-    const contenidoPortal = await limpiarConJina(url || "https://aristeguinoticias.com/");
+    const urlPortada = url || "https://aristeguinoticias.com/";
     const nombre = nombrePortal || "ARISTEGUI NOTICIAS";
 
-    const promptBloque = `Analiza el contenido del siguiente portal (${nombre}) y genera un resumen estructurado para radio.
-Contenido:
-${contenidoPortal}`;
+    console.log(`🔍 [Botón 5] Analizando portada de ${nombre}: ${urlPortada}`);
+    
+    // 1. Extraer la portada con Jina para obtener texto y enlaces de la página principal
+    const contenidoPortada = await limpiarConJina(urlPortada);
+
+    // 2. Pedirle a DeepSeek que actúe como editor y elija la URL de la nota más importante
+    const promptSeleccion = `Estás analizando la portada del portal "${nombre}". 
+A continuación se muestra el contenido y los enlaces detectados en la portada. 
+Tu tarea es seleccionar UNA SOLA NOTA que sea la más importante, relevante o destacada para un noticiero de radio.
+
+Debes devolver tu respuesta estrictamente en este formato de dos líneas:
+URL_SELECCIONADA: [Pega aquí la URL absoluta exacta de la nota elegida]
+MOTIVO: [Breve razón de por qué la elegiste]
+
+CONTENIDO DE LA PORTADA:
+${contenidoPortada}`;
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
-    const response = await axios.post(apiUrl, {
+    
+    const respuestaSeleccion = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un redactor analítico de noticias.' },
-        { role: 'user', content: promptBloque }
+        { role: 'system', content: 'Eres un editor de noticias experto en seleccionar la nota principal de una portada web.' },
+        { role: 'user', content: promptSeleccion }
+      ],
+      temperature: 0.1,
+      max_tokens: 500
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+
+    const textoIA = respuestaSeleccion.data.choices[0].message.content;
+    console.log(`🤖 [Botón 5] Respuesta del editor IA:\n${textoIA}`);
+
+    // 3. Extraer limpiamente la URL elegida usando una expresión regular
+    const matchUrl = textoIA.match(/URL_SELECCIONADA:\s*(https?:\/\/[^\s]+)/i);
+    
+    let contenidoNotaFinal = "";
+    let urlEncontrada = "";
+
+    if (matchUrl && matchUrl[1]) {
+      urlEncontrada = matchUrl[1].trim();
+      console.log(`📥 [Botón 5] URL seleccionada por la IA. Extrayendo nota profunda: ${urlEncontrada}`);
+      
+      // 4. Jina extrae el texto completo y profundo de esa única nota seleccionada
+      contenidoNotaFinal = await limpiarConJina(urlEncontrada);
+    } else {
+      console.log(`⚠️ [Botón 5] La IA no devolvió una URL válida. Usando contenido general de respaldo.`);
+      contenidoNotaFinal = contenidoPortada;
+    }
+
+    // 5. Pedir a DeepSeek que redacte el guión de radio definitivo con la nota profunda
+    const promptRedaccion = `A partir de la nota completa extraída del portal "${nombre}" (Enlace: ${urlEncontrada || urlPortada}), redacta un guión periodístico profesional y completo para radio, estructurado, limpio y listo para locución.
+
+CONTENIDO DE LA NOTA:
+${contenidoNotaFinal}`;
+
+    const respuestaRedaccion = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un redactor profesional de noticias para radio comercial.' },
+        { role: 'user', content: promptRedaccion }
       ],
       temperature: 0.2,
       max_tokens: 4000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
 
-    res.json({ exito: true, guion: response.data.choices[0].message.content });
-  } catch (error) {
-    res.status(500).json({ exito: false, error: 'Error al procesar el bloque.', detalle: error.message });
-  }
-});
+    res.json({ 
+      exito: true, 
+      guion: respuestaRedaccion.data.choices[0].message.content,
+      urlAnalizada: urlEncontrada || urlPortada 
+    });
 
-app.listen(port, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${port}`);
+  } catch (error) {
+    console.log("❌ Error en Botón 5:", error.message);
+    res.status(500).json({ exito: false, error: 'Error al procesar el bloque de URL única.', detalle: error.message });
+  }
 });
