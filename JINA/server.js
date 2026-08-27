@@ -386,14 +386,14 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 5: BARRIDO INTELIGENTE DE LOS 25 PORTALES
+// GUIÓN EXPRESS (BARRIDO INTELIGENTE DE LOS 25 PORTALES)
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    console.log("🚀 [Botón 5] Iniciando barrido estricto de los 25 portales...");
+    console.log("🚀 [Guión Express] Iniciando barrido estricto de los 25 portales...");
 
     const todosLosPortales = [
       // Chiapas (10)
@@ -517,7 +517,7 @@ ${corpusGeneral}`;
     });
 
   } catch (error) {
-    console.log("❌ Error en Barrido de Portales:", error.message);
+    console.log("❌ Error en Guión Express:", error.message);
     res.status(500).json({ exito: false, error: 'Error al procesar el barrido.', detalle: error.message });
   }
 });
