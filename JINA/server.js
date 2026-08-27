@@ -388,16 +388,15 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 5: BARRIDO INTELIGENTE DE 25 PORTALES (NOTA ÍNTEGRA POR MEDIO)
+// OPCIÓN 5: BARRIDO INTELIGENTE DE 25 PORTALES (VERSIÓN DEFINITIVA)
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    console.log("🚀 [Botón 5] Iniciando barrido inteligente de los 25 portales...");
+    console.log("🚀 [Botón 5] Iniciando barrido estricto de los 25 portales...");
 
-    // Lista unificada de los 25 portales (Chiapas + Nacionales)
     const todosLosPortales = [
       // Chiapas (10)
       { nombre: "CUARTO PODER", url: "https://cuartopoder.mx" },
@@ -431,104 +430,88 @@ app.post('/api/procesar-bloque', async (req, res) => {
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     let notasProcesadas = [];
 
+    // Bucle estricto por cada uno de los 25 portales
     for (let i = 0; i < todosLosPortales.length; i++) {
       const portal = todosLosPortales[i];
-      console.log(`\n--------------------------------------------------`);
-      console.log(`🔍 [${i + 1}/25] Analizando portal: ${portal.nombre} (${portal.url})`);
+      console.log(`🔍 [${i + 1}/25] Procesando portal: ${portal.nombre}`);
 
       try {
-        // PASO 1: Jina extrae la portada del portal
+        // 1. Jina extrae la portada
         const contenidoPortada = await limpiarConJina(portal.url);
-        
-        if (!contenidoPortada || contenidoPortada.length < 200) {
-          console.log(`⚠️ Portal ${portal.nombre} sin contenido suficiente en portada. Saltando...`);
-          continue;
-        }
+        if (!contenidoPortada || contenidoPortada.length < 150) continue;
 
-        // PASO 2: DeepSeek analiza la portada y elige la URL de la nota más importante
-        const promptSeleccion = `Estás analizando la portada del portal "${portal.nombre}". 
-A continuación se muestra el contenido y los enlaces detectados. 
-Selecciona UNA SOLA NOTA que sea la más importante o relevante.
-
-Devuelve tu respuesta estrictamente en este formato:
-URL_SELECCIONADA: [Pega la URL absoluta exacta de la nota elegida]
+        // 2. DeepSeek selecciona la URL de la nota principal de ESTE portal
+        const promptSeleccion = `Estás analizando la portada del medio "${portal.nombre}". 
+Selecciona UNA SOLA NOTA que sea la más importante de este portal y extrae su URL absoluta.
+Responde estrictamente con el formato:
+URL_SELECCIONADA: [URL de la nota]
 
 CONTENIDO DE LA PORTADA:
 ${contenidoPortada}`;
 
-        const respuestaSeleccion = await axios.post(apiUrl, {
+        const respSel = await axios.post(apiUrl, {
           model: 'deepseek-chat',
           messages: [
-            { role: 'system', content: 'Eres un editor experto seleccionando la nota principal de portales web.' },
+            { role: 'system', content: 'Eres un editor web extrayendo URLs.' },
             { role: 'user', content: promptSeleccion }
           ],
           temperature: 0.1,
-          max_tokens: 300
-        }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 30000 });
+          max_tokens: 200
+        }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 25000 });
 
-        const textoIA = respuestaSeleccion.data.choices[0].message.content;
-        const matchUrl = textoIA.match(/URL_SELECCIONADA:\s*(https?:\/\/[^\s]+)/i);
+        const matchUrl = respSel.data.choices[0].message.content.match(/URL_SELECCIONADA:\s*(https?:\/\/[^\s]+)/i);
 
         if (matchUrl && matchUrl[1]) {
           const urlNota = matchUrl[1].trim();
-          console.log(`🎯 Nota elegida en ${portal.nombre}: ${urlNota}`);
+          
+          // 3. Jina extrae el texto íntegro de esa nota específica
+          const textoNota = await limpiarConJina(urlNota);
 
-          // PASO 3: Jina extrae el texto íntegro y profundo de esa URL específica
-          const textoNotaIntegra = await limpiarConJina(urlNota);
-
-          if (textoNotaIntegra && textoNotaIntegra.length > 200) {
+          if (textoNota && textoNota.length > 200) {
             notasProcesadas.push({
               portal: portal.nombre,
               url: urlNota,
-              contenido: textoNotaIntegra
+              contenido: textoNota
             });
-          } else {
-            console.log(`⚠️ La nota extraída de ${portal.nombre} fue muy corta.`);
+            console.log(`✅ Nota íntegra obtenida de ${portal.nombre}`);
           }
-        } else {
-          console.log(`⚠️ La IA no pudo extraer una URL válida para ${portal.nombre}.`);
         }
-
-        // Pausa breve de cortesía para no saturar servidores ni APIs
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
+        
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (errPortal) {
-        console.log(`❌ Error procesando el portal ${portal.nombre}:`, errPortal.message);
+        console.log(`⚠️ Error en portal ${portal.nombre}:`, errPortal.message);
       }
     }
 
-    console.log(`\n📊 Barrido completado. Se obtuvieron ${notasProcesadas.length} notas íntegras de 25 portales.`);
+    console.log(`📊 Total de notas íntegras recolectadas: ${notasProcesadas.length} de 25.`);
 
     if (notasProcesadas.length === 0) {
-      return res.status(500).json({ exito: false, error: 'No se pudo extraer ninguna nota en el barrido.' });
+      return res.status(500).json({ exito: false, error: 'No se pudieron extraer notas en el barrido.' });
     }
 
-    // Consolidar el gran bloque de texto con las notas obtenidas para pasárselo a DeepSeek en la redacción final
-    const corpusNotas = notasProcesadas.map(n => 
-      `PORTAL: ${n.portal}\nENLACE: ${n.url}\nTEXTO ÍNTEGRO:\n${n.contenido}\n----------------------------------------`
+    const corpusGeneral = notasProcesadas.map(n => 
+      `MEDIO: ${n.portal}\nENLACE: ${n.url}\nTEXTO COMPLETO:\n${n.contenido}\n----------------------------------------`
     ).join("\n\n");
 
-    // PASO 4: Redacción final estructurada para radio
-    const promptRedaccionFinal = `A continuación se presentan ${notasProcesadas.length} notas íntegras extraídas de diversos portales de Chiapas y nacionales mediante un proceso de selección inteligente.
+    // 4. Redacción final exigiendo que aparezcan todos los medios procesados
+    const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
-INSTRUCCIONES:
-1. Omite de manera absoluta cualquier mención a Eduardo Ramírez, sus apodos o siglas "ERA", o al Gobierno de Chiapas.
-2. Organiza la información de manera limpia y profesional para una mesa de trabajo de radio.
-3. Para cada nota, mantén el siguiente formato obligatorio:
-[NOMBRE DEL PORTAL]
-[TÍTULO CLARO EN MAYÚSCULAS]
-[Resumen o desarrollo redactado para radio, máximo 300 palabras]
-[Enlace: URL de la nota]
+REGLAS ESTRICTAS:
+1. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+2. Presenta un reporte de monitoreo estructurado donde se desglose la información recopilada de los diferentes medios analizados (tanto estatales como nacionales), asegurando que se refleje la diversidad de los portales y no uno solo.
+3. Formato limpio por cada medio:
+[NOMBRE DEL MEDIO]
+- Título y síntesis desarrollada de la nota extraída.
+- Enlace: [URL]
 
-NOTAS EXTRAÍDAS:
-${corpusNotas}`;
+NOTAS DE LOS PORTALES:
+${corpusGeneral}`;
 
-    console.log("✍️ Generando redacción y estructura final con DeepSeek...");
-    const respuestaFinal = await axios.post(apiUrl, {
+    const respFinal = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un editor general de noticias para radio, experto en sintetizar y formatear reportes de monitoreo de prensa.' },
-        { role: 'user', content: promptRedaccionFinal }
+        { role: 'system', content: 'Eres un analista de medios y director de noticias radiofónicas.' },
+        { role: 'user', content: promptFinal }
       ],
       temperature: 0.2,
       max_tokens: 8000
@@ -536,12 +519,12 @@ ${corpusNotas}`;
 
     res.json({ 
       exito: true, 
-      guion: respuestaFinal.data.choices[0].message.content,
-      totalPortalesProcesados: notasProcesadas.length 
+      guion: respFinal.data.choices[0].message.content,
+      totalPortales: notasProcesadas.length 
     });
 
   } catch (error) {
-    console.log("❌ Error general en Botón 5:", error.message);
-    res.status(500).json({ exito: false, error: 'Error al procesar el barrido inteligente.', detalle: error.message });
+    console.log("❌ Error en Barrido de Portales:", error.message);
+    res.status(500).json({ exito: false, error: 'Error al procesar el barrido.', detalle: error.message });
   }
 });
