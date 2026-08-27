@@ -264,8 +264,9 @@
       <button id="btnEnlaces" class="btn-opcion-4" onclick="solicitarGuion('/api/sintesis-con-enlaces', true)">
         🔗 Síntesis con Enlaces
       </button>
+      <!-- Botón actualizado a Guión Express -->
       <button id="btnBloque" class="btn-opcion-5" onclick="generarGuionPorBloques()">
-        ⚡ Bloque URL Única
+        ⚡ Guión Express
       </button>
     </div>
 
@@ -326,7 +327,6 @@
           const portalLimpio = portalActual.replace(/[\[\]]/g, '').trim();
           const portalLower = portalLimpio.toLowerCase();
 
-          // Asignación de URLs fijas oficiales y limpias por portal
           if (portalLower.includes('cuarto poder')) {
             enlaceFinal = 'https://www.cuartopoder.mx/';
           } else if (portalLower.includes('alerta chiapas')) {
@@ -350,7 +350,7 @@
           } else if (portalLower.includes('la jornada')) {
             enlaceFinal = 'https://www.jornada.com.mx/';
           } else if (portalLower.includes('el economista')) {
-            enlaceFinal = 'https://www.eleconomista.com.mx/';
+            enlaceFinal = 'https://eleconomista.com.mx/';
           } else if (portalLower.includes('expansión')) {
             enlaceFinal = 'https://politica.expansion.mx/';
           }
@@ -573,37 +573,33 @@
       contenedorOpcion4.style.display = 'none';
       btnCopiar.style.display = 'none';
 
-      barraProgreso.style.width = '50%';
-      textoPorcentaje.innerText = '50%';
-      loadingTexto.innerText = 'Procesando portal de forma individual con texto íntegro...';
+      barraProgreso.style.width = '20%';
+      textoPorcentaje.innerText = '20%';
+      loadingTexto.innerText = 'Iniciando barrido inteligente de los 25 portales...';
 
       try {
         const response = await fetch('/api/procesar-bloque', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url: "https://aristeguinoticias.com/",
-            nombrePortal: "ARISTEGUI NOTICIAS"
-          })
+          headers: { 'Content-Type': 'application/json' }
         });
 
         const data = await response.json();
 
         barraProgreso.style.width = '100%';
         textoPorcentaje.innerText = '100%';
-        loadingTexto.innerText = '¡Proceso por bloque completado!';
+        loadingTexto.innerText = '¡Guión Express completado con éxito!';
 
         if (data.exito) {
           salidaGuion.style.display = 'block';
           salidaGuion.value = data.guion;
           btnCopiar.style.display = 'flex';
-          mostrarAlerta('Bloque procesado correctamente.', 'exito');
+          mostrarAlerta(`Barrido de portales completado (${data.totalPortales} medios procesados).`, 'exito');
         } else {
-          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar el bloque.'}`, 'error');
+          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar el barrido.'}`, 'error');
         }
       } catch (err) {
         console.error(err);
-        mostrarAlerta('Error de conexión al procesar el bloque.', 'error');
+        mostrarAlerta('Error de conexión al procesar el Guión Express.', 'error');
       } finally {
         setTimeout(() => {
           btnEditado.disabled = false;
