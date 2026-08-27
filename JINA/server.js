@@ -388,90 +388,160 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// OPCIÓN 5: SELECCIÓN INTELIGENTE DE NOTA Y PROCESAMIENTO PROFUNDO
+// OPCIÓN 5: BARRIDO INTELIGENTE DE 25 PORTALES (NOTA ÍNTEGRA POR MEDIO)
 // =========================================================
 app.post('/api/procesar-bloque', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const { url, nombrePortal } = req.body;
-    const urlPortada = url || "https://aristeguinoticias.com/";
-    const nombre = nombrePortal || "ARISTEGUI NOTICIAS";
+    console.log("🚀 [Botón 5] Iniciando barrido inteligente de los 25 portales...");
 
-    console.log(`🔍 [Botón 5] Analizando portada de ${nombre}: ${urlPortada}`);
-    
-    // 1. Extraer la portada con Jina para obtener texto y enlaces de la página principal
-    const contenidoPortada = await limpiarConJina(urlPortada);
+    // Lista unificada de los 25 portales (Chiapas + Nacionales)
+    const todosLosPortales = [
+      // Chiapas (10)
+      { nombre: "CUARTO PODER", url: "https://cuartopoder.mx" },
+      { nombre: "EL HERALDO DE CHIAPAS", url: "https://elheraldodechiapas.com.mx" },
+      { nombre: "DIARIO DE CHIAPAS", url: "https://diariodechiapas.com" },
+      { nombre: "ALERTA CHIAPAS", url: "https://alertachiapas.com" },
+      { nombre: "CHIAPAS PARALELO", url: "https://chiapasparalelo.com" },
+      { nombre: "CHIAPAS EN CONTACTO", url: "https://chiapasencontacto.com" },
+      { nombre: "DIARIO ULTIMATUM", url: "https://ultimatumchiapas.com.mx" },
+      { nombre: "EL ORBE", url: "https://elorbe.com" },
+      { nombre: "ASICH", url: "https://www.asich.com/portada" },
+      { nombre: "LA VOZ DEL SURESTE", url: "https://diariolavozdelsureste.com/category/chiapas/" },
+      // Nacionales (15)
+      { nombre: "ARISTEGUI NOTICIAS", url: "https://aristeguinoticias.com/" },
+      { nombre: "MILENIO", url: "https://milenio.com" },
+      { nombre: "EL UNIVERSAL", url: "https://eluniversal.com.mx" },
+      { nombre: "INFOBAE MÉXICO", url: "https://infobae.com/mexico" },
+      { nombre: "PROCESO", url: "https://proceso.com.mx" },
+      { nombre: "ANIMAL POLÍTICO", url: "https://animalpolitico.com" },
+      { nombre: "LA JORNADA", url: "https://www.jornada.com.mx" },
+      { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com" },
+      { nombre: "REPORTE ÍNDIGO", url: "https://reporteindigo.com" },
+      { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx" },
+      { nombre: "EL NORTE", url: "https://elnorte.com" },
+      { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx" },
+      { nombre: "EL ECONOMISTA", url: "https://eleconomista.com.mx" },
+      { nombre: "CODIGO MAGENTA", url: "https://codigomagenta.com.mx" },
+      { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/noticias/" }
+    ];
 
-    // 2. Pedirle a DeepSeek que actúe como editor y elija la URL de la nota más importante
-    const promptSeleccion = `Estás analizando la portada del portal "${nombre}". 
-A continuación se muestra el contenido y los enlaces detectados en la portada. 
-Tu tarea es seleccionar UNA SOLA NOTA que sea la más importante, relevante o destacada para un noticiero de radio.
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    let notasProcesadas = [];
 
-Debes devolver tu respuesta estrictamente en este formato de dos líneas:
-URL_SELECCIONADA: [Pega aquí la URL absoluta exacta de la nota elegida]
-MOTIVO: [Breve razón de por qué la elegiste]
+    for (let i = 0; i < todosLosPortales.length; i++) {
+      const portal = todosLosPortales[i];
+      console.log(`\n--------------------------------------------------`);
+      console.log(`🔍 [${i + 1}/25] Analizando portal: ${portal.nombre} (${portal.url})`);
+
+      try {
+        // PASO 1: Jina extrae la portada del portal
+        const contenidoPortada = await limpiarConJina(portal.url);
+        
+        if (!contenidoPortada || contenidoPortada.length < 200) {
+          console.log(`⚠️ Portal ${portal.nombre} sin contenido suficiente en portada. Saltando...`);
+          continue;
+        }
+
+        // PASO 2: DeepSeek analiza la portada y elige la URL de la nota más importante
+        const promptSeleccion = `Estás analizando la portada del portal "${portal.nombre}". 
+A continuación se muestra el contenido y los enlaces detectados. 
+Selecciona UNA SOLA NOTA que sea la más importante o relevante.
+
+Devuelve tu respuesta estrictamente en este formato:
+URL_SELECCIONADA: [Pega la URL absoluta exacta de la nota elegida]
 
 CONTENIDO DE LA PORTADA:
 ${contenidoPortada}`;
 
-    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
-    
-    const respuestaSeleccion = await axios.post(apiUrl, {
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: 'Eres un editor de noticias experto en seleccionar la nota principal de una portada web.' },
-        { role: 'user', content: promptSeleccion }
-      ],
-      temperature: 0.1,
-      max_tokens: 500
-    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+        const respuestaSeleccion = await axios.post(apiUrl, {
+          model: 'deepseek-chat',
+          messages: [
+            { role: 'system', content: 'Eres un editor experto seleccionando la nota principal de portales web.' },
+            { role: 'user', content: promptSeleccion }
+          ],
+          temperature: 0.1,
+          max_tokens: 300
+        }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 30000 });
 
-    const textoIA = respuestaSeleccion.data.choices[0].message.content;
-    console.log(`🤖 [Botón 5] Respuesta del editor IA:\n${textoIA}`);
+        const textoIA = respuestaSeleccion.data.choices[0].message.content;
+        const matchUrl = textoIA.match(/URL_SELECCIONADA:\s*(https?:\/\/[^\s]+)/i);
 
-    // 3. Extraer limpiamente la URL elegida usando una expresión regular
-    const matchUrl = textoIA.match(/URL_SELECCIONADA:\s*(https?:\/\/[^\s]+)/i);
-    
-    let contenidoNotaFinal = "";
-    let urlEncontrada = "";
+        if (matchUrl && matchUrl[1]) {
+          const urlNota = matchUrl[1].trim();
+          console.log(`🎯 Nota elegida en ${portal.nombre}: ${urlNota}`);
 
-    if (matchUrl && matchUrl[1]) {
-      urlEncontrada = matchUrl[1].trim();
-      console.log(`📥 [Botón 5] URL seleccionada por la IA. Extrayendo nota profunda: ${urlEncontrada}`);
-      
-      // 4. Jina extrae el texto completo y profundo de esa única nota seleccionada
-      contenidoNotaFinal = await limpiarConJina(urlEncontrada);
-    } else {
-      console.log(`⚠️ [Botón 5] La IA no devolvió una URL válida. Usando contenido general de respaldo.`);
-      contenidoNotaFinal = contenidoPortada;
+          // PASO 3: Jina extrae el texto íntegro y profundo de esa URL específica
+          const textoNotaIntegra = await limpiarConJina(urlNota);
+
+          if (textoNotaIntegra && textoNotaIntegra.length > 200) {
+            notasProcesadas.push({
+              portal: portal.nombre,
+              url: urlNota,
+              contenido: textoNotaIntegra
+            });
+          } else {
+            console.log(`⚠️ La nota extraída de ${portal.nombre} fue muy corta.`);
+          }
+        } else {
+          console.log(`⚠️ La IA no pudo extraer una URL válida para ${portal.nombre}.`);
+        }
+
+        // Pausa breve de cortesía para no saturar servidores ni APIs
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+      } catch (errPortal) {
+        console.log(`❌ Error procesando el portal ${portal.nombre}:`, errPortal.message);
+      }
     }
 
-    // 5. Pedir a DeepSeek que redacte el guión de radio definitivo con la nota profunda
-    const promptRedaccion = `A partir de la nota completa extraída del portal "${nombre}" (Enlace: ${urlEncontrada || urlPortada}), redacta un guión periodístico profesional y completo para radio, estructurado, limpio y listo para locución.
+    console.log(`\n📊 Barrido completado. Se obtuvieron ${notasProcesadas.length} notas íntegras de 25 portales.`);
 
-CONTENIDO DE LA NOTA:
-${contenidoNotaFinal}`;
+    if (notasProcesadas.length === 0) {
+      return res.status(500).json({ exito: false, error: 'No se pudo extraer ninguna nota en el barrido.' });
+    }
 
-    const respuestaRedaccion = await axios.post(apiUrl, {
+    // Consolidar el gran bloque de texto con las notas obtenidas para pasárselo a DeepSeek en la redacción final
+    const corpusNotas = notasProcesadas.map(n => 
+      `PORTAL: ${n.portal}\nENLACE: ${n.url}\nTEXTO ÍNTEGRO:\n${n.contenido}\n----------------------------------------`
+    ).join("\n\n");
+
+    // PASO 4: Redacción final estructurada para radio
+    const promptRedaccionFinal = `A continuación se presentan ${notasProcesadas.length} notas íntegras extraídas de diversos portales de Chiapas y nacionales mediante un proceso de selección inteligente.
+
+INSTRUCCIONES:
+1. Omite de manera absoluta cualquier mención a Eduardo Ramírez, sus apodos o siglas "ERA", o al Gobierno de Chiapas.
+2. Organiza la información de manera limpia y profesional para una mesa de trabajo de radio.
+3. Para cada nota, mantén el siguiente formato obligatorio:
+[NOMBRE DEL PORTAL]
+[TÍTULO CLARO EN MAYÚSCULAS]
+[Resumen o desarrollo redactado para radio, máximo 300 palabras]
+[Enlace: URL de la nota]
+
+NOTAS EXTRAÍDAS:
+${corpusNotas}`;
+
+    console.log("✍️ Generando redacción y estructura final con DeepSeek...");
+    const respuestaFinal = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un redactor profesional de noticias para radio comercial.' },
-        { role: 'user', content: promptRedaccion }
+        { role: 'system', content: 'Eres un editor general de noticias para radio, experto en sintetizar y formatear reportes de monitoreo de prensa.' },
+        { role: 'user', content: promptRedaccionFinal }
       ],
       temperature: 0.2,
-      max_tokens: 4000
-    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+      max_tokens: 8000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
     res.json({ 
       exito: true, 
-      guion: respuestaRedaccion.data.choices[0].message.content,
-      urlAnalizada: urlEncontrada || urlPortada 
+      guion: respuestaFinal.data.choices[0].message.content,
+      totalPortalesProcesados: notasProcesadas.length 
     });
 
   } catch (error) {
-    console.log("❌ Error en Botón 5:", error.message);
-    res.status(500).json({ exito: false, error: 'Error al procesar el bloque de URL única.', detalle: error.message });
+    console.log("❌ Error general en Botón 5:", error.message);
+    res.status(500).json({ exito: false, error: 'Error al procesar el barrido inteligente.', detalle: error.message });
   }
 });
