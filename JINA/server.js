@@ -525,3 +525,45 @@ ${corpusGeneral}`;
     res.status(500).json({ exito: false, error: 'Error al procesar el barrido.', detalle: error.message });
   }
 });
+// =========================================================
+// BOTÓN 6: CREACIÓN DE GUION (Copia del Botón 3)
+// =========================================================
+app.post('/api/creacion-guion', async (req, res) => {
+  try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
+
+    console.log("🎙️ [Creación de Guion] Procesando solicitud...");
+
+    // AQUÍ VA LA LÓGICA ORIGINAL QUE TIENES EN EL BOTÓN 3
+    // Por ejemplo, si el Botón 3 procesa un texto o recopila notas para armar la escaleta de locución:
+    const { contenidoBase } = req.body; 
+
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+
+    const promptGuion = `Con base en la información proporcionada, redacta un guion de locución radial dinámico, profesional y listo para cabina...
+    
+    CONTENIDO BASE:
+    ${contenidoBase || "Sin contenido previo"}
+    `;
+
+    const respGuion = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un productor y locutor de radio profesional experto en redactar escaletas y guiones informativos.' },
+        { role: 'user', content: promptGuion }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+
+    res.json({ 
+      exito: true, 
+      guion: respGuion.data.choices[0].message.content 
+    });
+
+  } catch (error) {
+    console.log("❌ Error en Creación de Guion:", error.message);
+    res.status(500).json({ exito: false, error: 'Error al generar el guion.', detalle: error.message });
+  }
+});
