@@ -489,10 +489,11 @@ ${contenidoPortada}`;
 
     const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
-REGLAS ESTRICTAS:
-1. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-2. Presenta un reporte de monitoreo estructurado donde se desglose la información recopilada de los diferentes medios analizados, asegurando que se refleje la diversidad de los portales.
-3. Formato limpio por cada medio:
+REGLAS ESTRICTAS DE DIRECCIÓN DE NOTICIAS:
+1. FILTRO ANTI-COPIA Y DUPLICADOS: Filtra y descarta notas duplicadas o que aborden exactamente el mismo hecho, evento o conferencia de prensa (por ejemplo, elimina repeticiones sobre iniciativas presidenciales, detenciones judiciales o comunicados institucionales si ese mismo tema ya fue abordado o publicado en otro medio). Prioriza la variedad absoluta de temas para que cada medio presente una noticia completamente distinta.
+2. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+3. Presenta un reporte de monitoreo estructurado donde se desglose la información recopilada asegurando máxima diversidad temática.
+4. Formato limpio por cada medio seleccionado tras el filtro:
 [NOMBRE DEL MEDIO]
 - Título y síntesis desarrollada de la nota extraída.
 - Enlace: [URL]
@@ -503,7 +504,7 @@ ${corpusGeneral}`;
     const respFinal = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios y director de noticias radiofónicas.' },
+        { role: 'system', content: 'Eres un analista de medios y director de noticias radiofónicas implacable con la repetición de temas.' },
         { role: 'user', content: promptFinal }
       ],
       temperature: 0.2,
@@ -520,8 +521,4 @@ ${corpusGeneral}`;
     console.log("❌ Error en Guión Express:", error.message);
     res.status(500).json({ exito: false, error: 'Error al procesar el barrido.', detalle: error.message });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
 });
