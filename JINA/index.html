@@ -61,7 +61,7 @@
 
     .panel-botones {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 8px;
       margin-bottom: 15px;
     }
@@ -90,6 +90,9 @@
 
     .btn-opcion-5 { background-color: #7c3aed; }
     .btn-opcion-5:hover { background-color: #6d28d9; }
+
+    .btn-opcion-6 { background-color: #b45309; }
+    .btn-opcion-6:hover { background-color: #92400e; }
 
     #loading {
       display: none;
@@ -264,9 +267,12 @@
       <button id="btnEnlaces" class="btn-opcion-4" onclick="solicitarGuion('/api/sintesis-con-enlaces', true)">
         🔗 Síntesis con Enlaces
       </button>
-      <!-- Botón actualizado a Guión Express -->
       <button id="btnBloque" class="btn-opcion-5" onclick="generarGuionPorBloques()">
         ⚡ Guión Express
+      </button>
+      <!-- Nuevo Botón 6: Creación de Guion -->
+      <button id="btnCreacionGuion" class="btn-opcion-6" onclick="solicitarGuion('/api/creacion-guion', false)">
+        🎙️ Creación de Guion
       </button>
     </div>
 
@@ -449,6 +455,7 @@
       const btnSintesis = document.getElementById('btnSintesis');
       const btnEnlaces = document.getElementById('btnEnlaces');
       const btnBloque = document.getElementById('btnBloque');
+      const btnCreacionGuion = document.getElementById('btnCreacionGuion');
       const btnCopiar = document.getElementById('btnCopiar');
       
       const loading = document.getElementById('loading');
@@ -465,6 +472,7 @@
       btnSintesis.disabled = true;
       btnEnlaces.disabled = true;
       btnBloque.disabled = true;
+      btnCreacionGuion.disabled = true;
 
       loading.style.display = 'block';
       alerta.style.display = 'none';
@@ -520,7 +528,7 @@
             salidaGuion.value = data.guion;
           } else {
             salidaGuion.style.display = 'block';
-            salidaGuion.value = data.guion;
+            salidaGuion.value = data.guion || data.guionGenerado;
           }
           btnCopiar.style.display = 'flex';
           mostrarAlerta('Contenido generado correctamente.', 'exito');
@@ -539,6 +547,7 @@
           btnSintesis.disabled = false;
           btnEnlaces.disabled = false;
           btnBloque.disabled = false;
+          btnCreacionGuion.disabled = false;
           loading.style.display = 'none';
         }, 800);
       }
@@ -550,6 +559,7 @@
       const btnSintesis = document.getElementById('btnSintesis');
       const btnEnlaces = document.getElementById('btnEnlaces');
       const btnBloque = document.getElementById('btnBloque');
+      const btnCreacionGuion = document.getElementById('btnCreacionGuion');
       const btnCopiar = document.getElementById('btnCopiar');
       
       const loading = document.getElementById('loading');
@@ -566,6 +576,7 @@
       btnSintesis.disabled = true;
       btnEnlaces.disabled = true;
       btnBloque.disabled = true;
+      btnCreacionGuion.disabled = true;
 
       loading.style.display = 'block';
       alerta.style.display = 'none';
@@ -575,7 +586,7 @@
 
       barraProgreso.style.width = '20%';
       textoPorcentaje.innerText = '20%';
-      loadingTexto.innerText = 'Iniciando barrido inteligente de los 25 portales...';
+      loadingTexto.innerText = 'Iniciando barrido inteligente de los portales...';
 
       try {
         const response = await fetch('/api/procesar-bloque', {
@@ -607,6 +618,7 @@
           btnSintesis.disabled = false;
           btnEnlaces.disabled = false;
           btnBloque.disabled = false;
+          btnCreacionGuion.disabled = false;
           loading.style.display = 'none';
         }, 800);
       }
