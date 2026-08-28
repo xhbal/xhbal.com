@@ -150,9 +150,9 @@ async function obtenerContenidoPortales() {
     { nombre: "MVS NOTICIAS", url: "https://mvsnoticias.com" },
     { nombre: "REPORTE ÍNDIGO", url: "https://reporteindigo.com" },
     { nombre: "EXCÉLSIOR", url: "https://www.excelsior.com.mx" },
-    { nombre: "EL NORTE", url: "https://www.elnorte.com" },
+    { nombre: "EL NORTE", url: "https://elnorte.com" },
     { nombre: "EL FINANCIERO", url: "https://www.elfinanciero.com.mx" },
-    { nombre: "EL ECONOMISTA", url: "https://www.eleconomista.com.mx" },
+    { nombre: "EL ECONOMISTA", url: "https://eleconomista.com.mx" },
     { nombre: "CODIGO MAGENTA", url: "https://codigomagenta.com.mx" },
     { nombre: "HERALDO DE MÉXICO", url: "https://heraldodemexico.com.mx/noticias/" }
   ];
@@ -205,7 +205,7 @@ REGLAS:
 2. NUNCA inventes noticias. Solo entre ${fechaAyer} y ${fechaHoy}.
 3. NO repitas temas.
 4. OMITIR de manera absoluta cualquier nota que mencione a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-5. Formato directo, sin palabras de locutor ni introducciones.
+5. Formato directo, sin introducciones.
 
 BLOQUE 2 — CHIAPAS (5 a 10 notas)
 ${seccionChiapas}
@@ -222,7 +222,7 @@ Formato de cada nota:
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un editor de noticias para radio comercial.' },
+        { role: 'system', content: 'Eres un editor de noticias.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.2,
@@ -305,7 +305,7 @@ app.post('/api/sintesis-prensa', async (req, res) => {
     const promptSintesis = `Fecha de hoy: ${fechaHoy}.
 
 OBJETIVO:
-Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para la mesa de trabajo de radio.
+Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para mesas de trabajo.
 
 REGLAS ESTRICTAS:
 1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
@@ -322,7 +322,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y monitoreo de prensa radial.' },
+        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y monitoreo de prensa.' },
         { role: 'user', content: promptSintesis }
       ],
       temperature: 0.1,
@@ -488,17 +488,11 @@ ${contenidoPortada}`;
 
     const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
-REGLAS ESTRICTAS DE DIRECCIÓN DE NOTICIAS:
-1. CERO DUPLICADOS Y CERO TEMAS REPETIDOS: Haz un filtro implacable. Si two o más portales abordan el mismo hecho, detención, conferencia, personaje o temática, ELIMINA TODAS LAS COPIAS Y QUÉDATE CON UNA SOLA EN UN SOLO MEDIO.
-2. EXTENSIÓN Y PROFUNDIDAD ADECUADA: Cada nota seleccionada debe tener una síntesis desarrollada, clara y robusta (de 3 a 5 oraciones con los datos duros más importantes).
+REGLAS ESTRICTAS DE CLASIFICACIÓN Y DIRECCIÓN DE NOTICIAS:
+1. CLASIFICA Y ORGANIZA ESTRICTAMENTE POR MEDIO (CADA MEDIO DEBE SER UNA SECCIÓN INDEPENDIENTE CON SU TÍTULO O ENCABEZADO CORRESPONDIENTE).
+2. EXTENSIÓN Y PROFUNDIDAD ADECUADA: Cada nota procesada de cada medio debe tener una síntesis desarrollada, clara y robusta (de 3 a 5 oraciones con los datos duros más importantes), incluyendo su respectivo enlace.
 3. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-4. FORMATO ESTRICTO DE SALIDA: Presenta UNICAMENTE la lista de medios con el formato indicado abajo.
-
-FORMATO POR CADA MEDIO:
-[NOMBRE DEL MEDIO]
-- [Título de la nota]
-  [Síntesis amplia y desarrollada de la nota]
-- Enlace: [URL]
+4. FORMATO ESTRICTO DE SALIDA: Presenta únicamente los bloques organizados por cada medio, sin agrupaciones por regiones o tipos de notas.
 
 NOTAS DE LOS PORTALES:
 ${corpusGeneral}`;
@@ -506,7 +500,7 @@ ${corpusGeneral}`;
     const respFinal = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios y director de noticias radiofónicas estricto con la variedad temática y la profundidad de los textos.' },
+        { role: 'system', content: 'Eres un analista de medios y director de noticias encargado de estructurar los reportes divididos de forma limpia y exclusiva por cada medio de comunicación.' },
         { role: 'user', content: promptFinal }
       ],
       temperature: 0.2,
@@ -539,7 +533,7 @@ app.post('/api/sintesis-filtro', async (req, res) => {
     const promptSintesisFiltro = `Fecha de hoy: ${fechaHoy}.
 
 OBJETIVO:
-Crear un reporte de "Síntesis de Prensa con Filtro" limpio y ordenado para la mesa de trabajo de radio.
+Crear un reporte de "Síntesis de Prensa con Filtro" limpio y ordenado para mesas de trabajo.
 
 REGLAS ESTRICTAS:
 1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
@@ -556,7 +550,7 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y filtrado de prensa radial.' },
+        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y filtrado de prensa.' },
         { role: 'user', content: promptSintesisFiltro }
       ],
       temperature: 0.1,
@@ -570,51 +564,65 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// RUTA 2DA ETAPA: PASAR NOTAS ÍNTEGRAS DE LA SELECCIÓN
+// RUTA 2DA ETAPA: PROCESAR SELECCIÓN CON JINA Y DEEPSEEK
 // =========================================================
 app.post('/api/generar-guion-seleccion', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const { notas } = req.body; // Recibe el array enviado desde el navegador con medio, titular y contenido
+    const { notas } = req.body; // Recibe el array con las notas seleccionadas (debe incluir url, medio y titular)
 
     if (!notas || !Array.isArray(notas) || notas.length === 0) {
       return res.status(400).json({ 
         exito: false, 
-        error: 'No se seleccionaron notas para generar el guión.' 
+        error: 'No se seleccionaron notas para procesar.' 
       });
     }
 
-    // Organizar el listado de notas conservando su versión original exacta
-    let textoNotasSeleccionadas = '';
-    notas.forEach((item, index) => {
-      textoNotasSeleccionadas += `\n--- NOTA ${index + 1} [Medio: ${item.medio}] ---\nTítulo: ${item.titular}\nTexto Original:\n${item.contenido || item.titular}\n`;
-    });
+    console.log(`📥 [Selección] Procesando ${notas.length} notas seleccionadas mediante Jina...`);
+    let corpusSeleccion = '';
+
+    for (let i = 0; i < notas.length; i++) {
+      const nota = notas[i];
+      const urlNota = nota.enlace || nota.url;
+
+      console.log(`🔍 Consultando URL de nota ${i + 1}/${notas.length}: ${urlNota || 'Sin URL'}`);
+      
+      let textoCompleto = '';
+      if (urlNota && urlNota.startsWith('http')) {
+        textoCompleto = await limpiarConJina(urlNota);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Pequeña pausa de cortesía
+      } else {
+        textoCompleto = nota.contenido || nota.titular || 'Sin contenido disponible';
+      }
+
+      corpusSeleccion += `\n----------------------------------------\nMEDIO: ${nota.medio || 'Desconocido'}\nTÍTULO: ${nota.titular || nota.titulo || 'Sin título'}\nENLACE: ${urlNota || 'N/A'}\nTEXTO ÍNTEGRO EXTRAÍDO:\n${textoCompleto}\n`;
+    }
 
     const promptSistema = `
-Actúa estrictamente como un sistema de transferencia de datos y recopilación documental para la estación XHBAL Latitud 93.5 FM.
-Tu única tarea es tomar los textos y titulares seleccionados a continuación y presentarlos en su **versión íntegra y original**. 
+Actúa como un editor y analista de noticias profesional. A continuación se presentan las notas seleccionadas por el usuario junto con sus textos íntegros recién extraídos de la web.
 
-REGLAS ABSOLUTAS:
-1. NO inventes, agregues, edites, resumas ni quites información. 
-2. Respeta palabra por palabra los textos originales proporcionados.
-3. No agregues introducciones de locutor ni saludos falsos; entrega los bloques informativos de manera limpia y tal cual fueron extraídos.
+INSTRUCCIONES ESTRICTAS:
+1. Organiza y presenta las notas de manera impecable y estructurada estrictamente por medio (cada medio como sección independiente).
+2. Asegúrate de incluir el texto íntegro, desarrollado y limpio de cada nota seleccionada, respetando los datos duros y añadiendo su enlace correspondiente.
+3. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+4. No agregues introducciones largas ni saludos; ve directo al contenido informativo estructurado.
 
-Contenido seleccionado:
-${textoNotasSeleccionadas}
+NOTAS SELECCIONADAS PARA PROCESAR:
+${corpusSeleccion}
     `.trim();
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un sistema estricto de transferencia de textos originales sin alteraciones.' },
+        { role: 'system', content: 'Eres un editor periodístico estricto experto en estructurar reportes basados en notas seleccionadas y extraídas mediante web scraping.' },
         { role: 'user', content: promptSistema }
       ],
-      temperature: 0.0,
-      max_tokens: 4000
-    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+      temperature: 0.2,
+      max_tokens: 8000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
     res.json({
       exito: true,
@@ -622,10 +630,10 @@ ${textoNotasSeleccionadas}
     });
 
   } catch (error) {
-    console.error('Error al generar la segunda etapa del guión:', error);
+    console.error('Error al procesar la selección en la segunda etapa:', error);
     res.status(500).json({ 
       exito: false, 
-      error: 'Hubo un error en el servidor al procesar la versión íntegra.' 
+      error: 'Hubo un error en el servidor al procesar la selección con Jina y DeepSeek.' 
     });
   }
 });
@@ -648,11 +656,11 @@ app.post('/api/procesar-seleccion', async (req, res) => {
       `NOTA ${index + 1}:\nMedio: ${n.medio}\nTítulo: ${n.titulo}\nEnlace: ${n.enlace || 'N/A'}\n`
     ).join("\n----------------------------------------\n");
 
-    const promptSeleccion = `A continuación se presenta un conjunto de notas específicas seleccionadas por el locutor para el noticiero de radio.
+    const promptSeleccion = `A continuación se presenta un conjunto de notas específicas seleccionadas previamente.
 
 INSTRUCCIONES:
-1. Redacta un guion de locución fluido, profesional y listo para aire exclusivamente con estas notas seleccionadas.
-2. Mantén un formato limpio, estructurado y sin repetir información.
+1. Redacta un reporte limpio, profesional y estructurado exclusivamente con estas notas seleccionadas.
+2. Mantén un formato ordenado y sin repetir información.
 3. Incluye los enlaces correspondientes si la nota los requiere.
 
 NOTAS SELECCIONADAS:
@@ -662,7 +670,7 @@ ${corpusSeleccion}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un editor de noticias experto en radio que redacta guiones basados estrictamente en una selección previa.' },
+        { role: 'system', content: 'Eres un editor de noticias experto en procesar reportes basados estrictamente en una selección previa.' },
         { role: 'user', content: promptSeleccion }
       ],
       temperature: 0.2,
