@@ -61,7 +61,7 @@
 
     .panel-botones {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 8px;
       margin-bottom: 15px;
     }
@@ -91,6 +91,7 @@
     .btn-opcion-5 { background-color: #7c3aed; }
     .btn-opcion-5:hover { background-color: #6d28d9; }
 
+    /* Estilo explícito para el Botón 6 */
     .btn-opcion-6 { background-color: #b45309; }
     .btn-opcion-6:hover { background-color: #92400e; }
 
@@ -147,7 +148,6 @@
       overflow-x: auto;
     }
 
-    /* Estilo de Tabla Tipo Excel */
     .tabla-excel {
       width: 100%;
       border-collapse: collapse;
@@ -270,7 +270,7 @@
       <button id="btnBloque" class="btn-opcion-5" onclick="generarGuionPorBloques()">
         ⚡ Guión Express
       </button>
-      <!-- Nuevo Botón 6: Creación de Guion -->
+      <!-- Botón 6: Creación de Guion -->
       <button id="btnCreacionGuion" class="btn-opcion-6" onclick="solicitarGuion('/api/creacion-guion', false)">
         🎙️ Creación de Guion
       </button>
