@@ -458,7 +458,7 @@
       }
     }
 
-    function generarSegundaEtapaGuion() {
+    async function generarSegundaEtapaGuion() {
       const checkboxes = document.querySelectorAll('#contenedorFiltroCasillas input[type="checkbox"]:checked');
       if (checkboxes.length === 0) {
         mostrarAlerta('Por favor selecciona al menos un titular utilizando las casillas.', 'error');
@@ -467,19 +467,50 @@
 
       let notasSeleccionadas = [];
       checkboxes.forEach(cb => {
-        notasSeleccionadas.push(`- [${cb.getAttribute('data-medio')}] ${cb.value}`);
+        notasSeleccionadas.push({
+          medio: cb.getAttribute('data-medio'),
+          titular: cb.value
+        });
       });
 
-      const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
+      const btnEtapa2 = document.querySelector('.btn-accion-etapa2');
+      const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
+      const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
       const btnCopiar = document.getElementById('btnCopiar');
+      const alerta = document.getElementById('alerta');
 
-      contenedorFiltroCasillas.style.display = 'none';
-      salidaGuion.style.display = 'block';
-      salidaGuion.value = `**GUIÓN SELECCIONADO PARA XHBAL (Segunda Etapa)**\n\n` + notasSeleccionadas.join('\n');
-      btnCopiar.style.display = 'flex';
-      
-      mostrarAlerta(`¡Guión preparado con éxito con ${checkboxes.length} titulares seleccionados!`, 'exito');
+      btnEtapa2.disabled = true;
+      loading.style.display = 'block';
+      alerta.style.display = 'none';
+      document.getElementById('loadingTexto').innerText = 'Redactando guión final de locución con IA...';
+      document.getElementById('barraProgreso').style.width = '100%';
+      document.getElementById('textoPorcentaje').innerText = '100%';
+
+      try {
+        const response = await fetch('/api/generar-guion-seleccion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notas: notasSeleccionadas })
+        });
+
+        const data = await response.json();
+
+        if (data.exito) {
+          contenedorFiltroCasillas.style.display = 'none';
+          salidaGuion.style.display = 'block';
+          salidaGuion.value = data.guion || data.guionGenerado;
+          btnCopiar.style.display = 'flex';
+          mostrarAlerta('¡Guión final para locución generado con éxito!', 'exito');
+        } else {
+          mostrarAlerta(`Error: ${data.error || 'No se pudo generar el guión.'}`, 'error');
+        }
+      } catch (error) {
+        mostrarAlerta('Error de conexión al procesar el guión final.', 'error');
+      } finally {
+        loading.style.display = 'none';
+        btnEtapa2.disabled = false;
+      }
     }
 
     async function solicitarGuion(endpoint, esOpcion4) {
