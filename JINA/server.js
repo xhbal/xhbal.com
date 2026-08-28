@@ -490,12 +490,15 @@ ${contenidoPortada}`;
     const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
 REGLAS ESTRICTAS DE DIRECCIÓN DE NOTICIAS:
-1. FILTRO ANTI-COPIA Y DUPLICADOS: Filtra y descarta notas duplicadas o que aborden exactamente el mismo hecho, evento o conferencia de prensa (por ejemplo, elimina repeticiones sobre iniciativas presidenciales, detenciones judiciales o comunicados institucionales si ese mismo tema ya fue abordado o publicado en otro medio). Prioriza la variedad absoluta de temas para que cada medio presente una noticia completamente distinta.
-2. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-3. Presenta un reporte de monitoreo estructurado donde se desglose la información recopilada asegurando máxima diversidad temática.
-4. Formato limpio por cada medio seleccionado tras el filtro:
+1. CERO DUPLICADOS Y CERO TEMAS REPETIDOS: Haz un filtro implacable. Si dos o más portales abordan el mismo hecho, detención, conferencia, personaje o temática (por ejemplo, casos judiciales específicos, iniciativas presidenciales o reuniones bilaterales repetidas), ELIMINA TODAS LAS COPIAS Y QUÉDATE CON UNA SOLA EN UN SOLO MEDIO. Los demás portales afectados deben mostrar una noticia completamente distinta. Variedad temática absoluta.
+2. EXTENSIÓN Y PROFUNDIDAD ADECUADA: No recortes las notas a una sola línea. Cada nota seleccionada debe tener una síntesis desarrollada, clara y robusta (de 3 a 5 oraciones con los datos duros más importantes).
+3. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+4. FORMATO ESTRICTO DE SALIDA: Presenta UNICAMENTE la lista de medios con el formato indicado abajo. ESTÁ PROHIBIDO agregar "Síntesis General", conclusiones, introducciones, notas finales o despedidas al final del texto.
+
+FORMATO POR CADA MEDIO:
 [NOMBRE DEL MEDIO]
-- Título y síntesis desarrollada de la nota extraída.
+- [Título de la nota]
+  [Síntesis amplia y desarrollada de la nota]
 - Enlace: [URL]
 
 NOTAS DE LOS PORTALES:
@@ -504,7 +507,7 @@ ${corpusGeneral}`;
     const respFinal = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios y director de noticias radiofónicas implacable con la repetición de temas.' },
+        { role: 'system', content: 'Eres un analista de medios y director de noticias radiofónicas estricto con la variedad temática y la profundidad de los textos.' },
         { role: 'user', content: promptFinal }
       ],
       temperature: 0.2,
