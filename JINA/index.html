@@ -299,9 +299,14 @@
     <div class="resultado-container">
       <div class="resultado-header">
         <span id="labelEstado" style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Monitoreo de Noticias</span>
-        <button id="btnCopiar" class="btn-secundario" style="display: none;" onclick="copiarAlPortapapeles()">
-          📋 Copiar Texto
-        </button>
+        <div style="display: flex; gap: 6px;">
+          <button id="btnRegresarCasillas" class="btn-secundario" style="display: none; background-color: #0284c7;" onclick="regresarACasillas()">
+            ← Regresar a Selección
+          </button>
+          <button id="btnCopiar" class="btn-secundario" style="display: none;" onclick="copiarAlPortapapeles()">
+            📋 Copiar Texto
+          </button>
+        </div>
       </div>
 
       <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
@@ -314,6 +319,8 @@
   </div>
 
   <script>
+    let ultimoTextoCasillasHtml = ''; // Variable para almacenar el estado de las casillas
+
     function mostrarAlerta(mensaje, tipo) {
       const alerta = document.getElementById('alerta');
       alerta.className = `alerta ${tipo}`;
@@ -340,11 +347,10 @@
 
     function renderizarCasillasFiltro(textoGuion) {
       const contenedor = document.getElementById('contenedorFiltroCasillas');
-      contenedor.innerHTML = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona los titulares por medio que deseas incluir en el guión:</h3>';
+      let htmlContruido = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona los titulares por medio que deseas incluir en el guión:</h3>';
 
       const lineas = textoGuion.split('\n');
       let medioActual = 'GENERAL';
-      let htmlConstruido = '';
       let notasIndex = 0;
       let notasArray = [];
       let notaActual = null;
@@ -353,13 +359,13 @@
         let lineaTrim = linea.trim();
         if (lineaTrim === '') return;
 
-        // Detectar encabezado de medio / portal
-        if (lineaTrim.startsWith('###') || (lineaTrim.startsWith('**') && lineaTrim.endsWith('**') && !lineaTrim.includes('http'))) {
+        // Detectar encabezado de medio / portal de forma flexible (incluyendo formatos tipo **Portal** o ### Portal)
+        if (lineaTrim.startsWith('###') || lineaTrim.startsWith('##') || (lineaTrim.startsWith('**') && lineaTrim.endsWith('**') && !lineaTrim.includes('http') && lineaTrim.length < 50)) {
           if (notaActual) {
             notasArray.push(notaActual);
             notaActual = null;
           }
-          medioActual = lineaTrim.replace(/###|\*\*/g, '').trim();
+          medioActual = lineaTrim.replace(/#+|\*\*/g, '').trim();
         } 
         // Detectar titular / nota (comienza con *, -, o números)
         else if (lineaTrim.startsWith('*') || lineaTrim.startsWith('-') || /^\d+[\.\)]/.test(lineaTrim)) {
@@ -378,7 +384,7 @@
           }
         } 
         else {
-          // Si es un párrafo o extracto complementario debajo del titular, se acumula para la nota actual
+          // Si es un párrafo o extracto complementario debajo del titular, se acumula
           if (notaActual && lineaTrim.length > 0 && !lineaTrim.startsWith('http')) {
             notaActual.contenidoLines.push(lineaTrim);
           }
@@ -397,38 +403,49 @@
       });
 
       for (let medio in mediosMap) {
-        htmlConstruido += `
+        htmlContruido += `
           <div class="grupo-medio">
             <h3>📡 ${escapeHtml(medio)}</h3>
         `;
         mediosMap[medio].forEach(nota => {
           let contenidoCompleto = nota.contenidoLines.join('\n');
-          htmlConstruido += `
+          htmlContruido += `
             <div class="item-nota">
               <input type="checkbox" id="${nota.id}" value="${escapeHtml(nota.titular)}" data-contenido="${escapeHtml(contenidoCompleto)}" data-medio="${escapeHtml(nota.medio)}">
               <label for="${nota.id}"><strong>${escapeHtml(nota.titular)}</strong></label>
             </div>
           `;
         });
-        htmlConstruido += `</div>`;
+        htmlContruido += `</div>`;
       }
 
-      if (htmlConstruido !== '') {
-        contenedor.innerHTML += htmlConstruido;
-        contenedor.innerHTML += `
+      if (Object.keys(mediosMap).length > 0) {
+        htmlContruido += `
           <button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">
             🎙️ Generar Guión con los Titulares Seleccionados
           </button>
         `;
+        contenedor.innerHTML = htmlContruido;
+        ultimoTextoCasillasHtml = htmlContruido; // Guardar estado para poder regresar
       } else {
-        contenedor.innerHTML += `<div style="padding: 10px; font-size: 12px;">${escapeHtml(textoGuion)}</div>`;
+        contenedor.innerHTML = `<div style="padding: 10px; font-size: 12px;">${escapeHtml(textoGuion)}</div>`;
       }
+    }
+
+    function regresarACasillas() {
+      document.getElementById('salidaGuion').style.display = 'none';
+      document.getElementById('btnRegresarCasillas').style.display = 'none';
+      document.getElementById('btnCopiar').style.display = 'none';
+      document.getElementById('contenedorFiltroCasillas').style.display = 'block';
+      document.getElementById('labelEstado').innerText = 'Monitoreo de Noticias (Selección)';
+      mostrarAlerta('Regresaste a la selección de casillas.', 'exito');
     }
 
     async function solicitarSintesisConCasillas() {
       const endpoint = '/api/sintesis-filtro';
       const btnSintesisFiltro = document.getElementById('btnSintesisFiltro');
       const btnCopiar = document.getElementById('btnCopiar');
+      const btnRegresarCasillas = document.getElementById('btnRegresarCasillas');
       const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
       const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
@@ -446,6 +463,7 @@
       contenedorOpcion4.style.display = 'none';
       contenedorFiltroCasillas.style.display = 'none';
       btnCopiar.style.display = 'none';
+      btnRegresarCasillas.style.display = 'none';
 
       let porcentajeActual = 0;
       barraProgreso.style.width = '0%';
@@ -474,6 +492,7 @@
 
         if (data.exito) {
           contenedorFiltroCasillas.style.display = 'block';
+          document.getElementById('labelEstado').innerText = 'Selección de Titulares';
           renderizarCasillasFiltro(data.guion || data.guionGenerado);
           mostrarAlerta('Revisa los medios y selecciona los titulares deseados.', 'exito');
         } else {
@@ -509,6 +528,7 @@
       const salidaGuion = document.getElementById('salidaGuion');
       const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
       const btnCopiar = document.getElementById('btnCopiar');
+      const btnRegresarCasillas = document.getElementById('btnRegresarCasillas');
       const alerta = document.getElementById('alerta');
 
       btnEtapa2.disabled = true;
@@ -532,6 +552,8 @@
           salidaGuion.style.display = 'block';
           salidaGuion.value = data.guion || data.guionGenerado;
           btnCopiar.style.display = 'flex';
+          btnRegresarCasillas.style.display = 'flex'; // Muestra el botón de regreso
+          document.getElementById('labelEstado').innerText = 'Guión Final Generado';
           mostrarAlerta('¡Contenido íntegro generado con éxito!', 'exito');
         } else {
           mostrarAlerta(`Error: ${data.error || 'No se pudo generar el guión.'}`, 'error');
@@ -557,8 +579,8 @@
       lineas.forEach(linea => {
         let l = linea.trim();
         if (!l) return;
-        if (l.startsWith('###') || (l.startsWith('**') && l.endsWith('**') && !l.includes('http'))) {
-          medioActual = l.replace(/###|\*\*/g, '').trim();
+        if (l.startsWith('###') || l.startsWith('##') || (l.startsWith('**') && l.endsWith('**') && !l.includes('http'))) {
+          medioActual = l.replace(/#+|\*\*/g, '').trim();
         } else if (l.includes('http://') || l.includes('https://') || l.startsWith('*') || l.startsWith('-')) {
           let urlMatch = l.match(/(https?:\/\/[^\s\)]+)/);
           let url = urlMatch ? urlMatch[0] : '';
@@ -580,6 +602,7 @@
       const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
       const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
       const btnCopiar = document.getElementById('btnCopiar');
+      const btnRegresarCasillas = document.getElementById('btnRegresarCasillas');
       const alerta = document.getElementById('alerta');
 
       loading.style.display = 'block';
@@ -588,6 +611,7 @@
       contenedorOpcion4.style.display = 'none';
       contenedorFiltroCasillas.style.display = 'none';
       btnCopiar.style.display = 'none';
+      btnRegresarCasillas.style.display = 'none';
 
       try {
         const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
@@ -602,6 +626,7 @@
             salidaGuion.value = data.guion || data.guionGenerado;
           }
           btnCopiar.style.display = 'flex';
+          document.getElementById('labelEstado').innerText = 'Contenido Generado';
           mostrarAlerta('Contenido generado correctamente.', 'exito');
         } else {
           mostrarAlerta(`Error: ${data.error}`, 'error');
