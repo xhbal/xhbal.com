@@ -533,12 +533,14 @@ app.post('/api/sintesis-filtro', async (req, res) => {
     const promptSintesisFiltro = `Fecha de hoy: ${fechaHoy}.
 
 OBJETIVO:
-Crear un reporte de "Síntesis de Prensa con Filtro" limpio y ordenado para mesas de trabajo.
+Crear un reporte de "Síntesis de Prensa con Filtro" estructurado estrictamente por medio.
 
-REGLAS ESTRICTAS:
-1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
-2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios de notas.
-3. OMISIONES: Excluye de manera absoluta cualquier nota o mención sobre Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+INSTRUCCIONES ESTRICTAS (DEBES SEGUIRLAS AL PIE DE LA LETRA):
+1. JERARQUÍA OBLIGATORIA POR MEDIO: Agrupa los datos estrictamente bajo su respectivo MEDIO. Primero muestra el nombre claro del medio y, debajo de este, sus títulos y textos íntegros correspondientes. Prohibido hacer listados independientes de puros títulos y luego puros medios.
+2. TEXTOS ÍNTEGROS SIN MODIFICACIÓN: NO resumas, redactes de nuevo, parafrasees ni alteres el contenido. Transcribe el texto de manera íntegra tal como se recibió.
+3. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
+4. OMISIONES: Excluye de manera absoluta cualquier nota o mención sobre Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+5. FORMATO DIRECTO: Cero saludos, introducciones o conclusiones; ve directo a la información estructurada.
 
 CONTENIDO DE CHIAPAS:
 ${seccionChiapas}
@@ -550,10 +552,10 @@ ${seccionNacionales}`;
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y filtrado de prensa.' },
+        { role: 'system', content: 'Eres un sistema estricto de organización de notas que respeta jerarquías por medio y transfiere textos de forma 100% íntegra sin redactar ni resumir.' },
         { role: 'user', content: promptSintesisFiltro }
       ],
-      temperature: 0.1,
+      temperature: 0.0, // Cero creatividad para evitar alteración de textos
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
@@ -601,15 +603,15 @@ app.post('/api/generar-guion-seleccion', async (req, res) => {
     }
 
     const promptSistema = `
-Actúa como un editor y analista de noticias profesional. A continuación se presentan las notas seleccionadas por el usuario junto con sus textos íntegros recién extraídos de la web.
+Actúa como un estructurador de contenidos periodísticos estricto. A continuación se presentan las notas seleccionadas por el usuario junto con sus textos íntegros recién extraídos de la web.
 
-INSTRUCCIONES ESTRICTAS:
-1. Organiza y presenta las notas de manera impecable y estructurada estrictamente por medio (cada medio como sección independiente).
-2. Asegúrate de incluir el texto íntegro, desarrollado y limpio de cada nota seleccionada, respetando los datos duros y añadiendo su enlace correspondiente.
-3. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-4. No agregues introducciones largas ni saludos; ve directo al contenido informativo estructurado.
+INSTRUCCIONES ESTRICTAS (DEBES SEGUIRLAS AL PIE DE LA LETRA):
+1. AGRUPACIÓN JERÁRQUICA OBLIGATORIA: Agrupa las notas estrictamente por MEDIO. Primero coloca el nombre del MEDIO de forma clara y, debajo de este, sus respectivos titulares y notas completas. Prohibido mezclar los medios o hacer listas separadas de puros títulos y luego puros medios.
+2. TEXTOS ÍNTEGROS SIN REDACCIÓN: NO redactes, resumas, parafrasees ni inventes texto. Debes transcribir y presentar los textos íntegros tal como llegaron en la extracción, respetando los datos duros originales.
+3. FILTRADO OBLIGATORIO: Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas en cualquier parte del texto o los títulos.
+4. FORMATO DIRECTO: Cero saludos, cero introducciones y cero conclusiones. Ve directo al contenido estructurado por medio.
 
-NOTAS SELECCIONADAS PARA PROCESAR:
+NOTAS SELECCIONADAS PARA PARSEAR:
 ${corpusSeleccion}
     `.trim();
 
@@ -617,10 +619,10 @@ ${corpusSeleccion}
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un editor periodístico estricto experto en estructurar reportes basados en notas seleccionadas y extraídas mediante web scraping.' },
+        { role: 'system', content: 'Eres un sistema estricto de organización de notas que respeta jerarquías por medio y transfiere textos de forma 100% íntegra sin redactar ni resumir.' },
         { role: 'user', content: promptSistema }
       ],
-      temperature: 0.2,
+      temperature: 0.0, // Temperatura a 0 para impedir que el modelo invente o reformule redacciones
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
