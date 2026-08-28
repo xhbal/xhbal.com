@@ -59,7 +59,6 @@
       font-size: 12px;
     }
 
-    /* Panel en Flexbox para forzar dos filas exactas de 3 botones */
     .panel-botones {
       display: flex;
       flex-wrap: wrap;
@@ -81,7 +80,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s;
-      font-size: 11px; /* Ajustado para acomodar textos largos sin amontonarse */
+      font-size: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -98,7 +97,6 @@
     .btn-opcion-5 { background-color: #7c3aed; }
     .btn-opcion-5:hover { background-color: #6d28d9; }
 
-    /* Estilo explícito para el Botón 6 */
     .btn-opcion-6 { background-color: #b45309; }
     .btn-opcion-6:hover { background-color: #92400e; }
 
@@ -149,6 +147,53 @@
       resize: vertical;
     }
 
+    /* Contenedor interactivo con casillas para la Síntesis con Filtro */
+    #contenedorFiltroCasillas {
+      display: none;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: #ffffff;
+      padding: 12px;
+      max-height: 450px;
+      overflow-y: auto;
+    }
+
+    .grupo-medio {
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+
+    .grupo-medio h3 {
+      font-size: 13px;
+      color: var(--primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .item-nota {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 12px;
+    }
+
+    .item-nota input[type="checkbox"] {
+      margin-top: 2px;
+      cursor: pointer;
+      width: 15px;
+      height: 15px;
+    }
+
+    .item-nota label {
+      cursor: pointer;
+      color: var(--text-main);
+    }
+
     #contenedorOpcion4 {
       display: none;
       width: 100%;
@@ -180,14 +225,6 @@
       color: var(--text-main);
     }
 
-    .tabla-excel tr:nth-child(even) {
-      background-color: #f8fafc;
-    }
-
-    .tabla-excel tr:hover {
-      background-color: #f1f5f9;
-    }
-
     .badge-portal-tabla {
       font-size: 11px;
       font-weight: 700;
@@ -200,36 +237,6 @@
       display: inline-block;
       white-space: nowrap;
     }
-
-    .titulo-tabla {
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 3px;
-      font-size: 13px;
-    }
-
-    .extracto-tabla {
-      color: var(--text-muted);
-      font-size: 11px;
-      line-height: 1.35;
-    }
-
-    .btn-enlace-tabla {
-      background-color: #0284c7;
-      color: white;
-      text-decoration: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: background-color 0.2s;
-    }
-
-    .btn-enlace-tabla:hover { background-color: #0369a1; }
 
     .alerta {
       padding: 8px 12px;
@@ -249,6 +256,15 @@
       width: auto;
     }
     .btn-secundario:hover { background-color: #334155; }
+
+    .btn-accion-etapa2 {
+      background-color: #059669;
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      font-size: 12px;
+    }
+    .btn-accion-etapa2:hover { background-color: #047857; }
   </style>
 </head>
 <body>
@@ -277,9 +293,8 @@
       <button id="btnBloque" class="btn-opcion-5" onclick="generarGuionPorBloques()">
         ⚡ Guión Express
       </button>
-      <!-- Botón 6: Síntesis de prensa con Filtro -->
-      <button id="btnSintesisFiltro" class="btn-opcion-6" onclick="solicitarGuion('/api/sintesis-filtro', false)">
-        📰 Síntesis de prensa con Filtro
+      <button id="btnSintesisFiltro" class="btn-opcion-6" onclick="solicitarSintesisConCasillas()">
+        ☑️ Síntesis con Filtro (Casillas)
       </button>
     </div>
 
@@ -304,6 +319,9 @@
       <textarea id="salidaGuion" readonly placeholder="Selecciona una opción arriba para comenzar a generar el contenido..."></textarea>
       
       <div id="contenedorOpcion4"></div>
+      
+      <!-- Contenedor interactivo con casillas -->
+      <div id="contenedorFiltroCasillas"></div>
     </div>
   </div>
 
@@ -322,212 +340,169 @@
       mostrarAlerta('¡Texto copiado al portapapeles con éxito!', 'exito');
     }
 
-    function renderizarOpcion4ComoTablaExcel(textoGuion) {
-      const contenedor = document.getElementById('contenedorOpcion4');
-      contenedor.innerHTML = '';
+    function renderizarCasillasFiltro(textoGuion) {
+      const contenedor = document.getElementById('contenedorFiltroCasillas');
+      contenedor.innerHTML = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona las notas que deseas incluir en el guión:</h3>';
 
       const lineas = textoGuion.split('\n');
-      let notas = [];
-      
-      let portalActual = '';
-      let tituloNota = '';
-      let enlaceNota = '';
-      let extractoNota = '';
+      let medioActual = 'GENERAL';
+      let htmlMedioActual = '';
+      let hayNotas = false;
 
-      function guardarNotaActual() {
-        if (tituloNota && portalActual) {
-          let enlaceFinal = enlaceNota.replace(/[\[\]]/g, '').trim();
-          const portalLimpio = portalActual.replace(/[\[\]]/g, '').trim();
-          const portalLower = portalLimpio.toLowerCase();
-
-          if (portalLower.includes('cuarto poder')) {
-            enlaceFinal = 'https://www.cuartopoder.mx/';
-          } else if (portalLower.includes('alerta chiapas')) {
-            enlaceFinal = 'https://alertachiapas.com/';
-          } else if (portalLower.includes('el heraldo de chiapas')) {
-            enlaceFinal = 'https://www.elheraldodechiapas.com.mx/';
-          } else if (portalLower.includes('chiapas paralelo')) {
-            enlaceFinal = 'https://www.chiapasparalelo.com/';
-          } else if (portalLower.includes('chiapas en contacto')) {
-            enlaceFinal = 'https://chiapasencontacto.com/';
-          } else if (portalLower.includes('asich')) {
-            enlaceFinal = 'https://www.asich.com/';
-          } else if (portalLower.includes('la voz del sureste')) {
-            enlaceFinal = 'https://diariolavozdelsureste.com/';
-          } else if (portalLower.includes('aristegui')) {
-            enlaceFinal = 'https://aristeguinoticias.com/';
-          } else if (portalLower.includes('animal político')) {
-            enlaceFinal = 'https://www.animalpolitico.com/';
-          } else if (portalLower.includes('proceso')) {
-            enlaceFinal = 'https://www.proceso.com.mx/';
-          } else if (portalLower.includes('la jornada')) {
-            enlaceFinal = 'https://www.jornada.com.mx/';
-          } else if (portalLower.includes('el economista')) {
-            enlaceFinal = 'https://eleconomista.com.mx/';
-          } else if (portalLower.includes('expansión')) {
-            enlaceFinal = 'https://politica.expansion.mx/';
-          }
-
-          notas.push({
-            portal: portalLimpio,
-            titulo: tituloNota.replace(/[\[\]]/g, '').replace(/^[•\-\*]\s*/, '').trim(),
-            enlace: enlaceFinal,
-            extracto: extractoNota.replace(/[\[\]]/g, '').trim()
-          });
-        }
-        tituloNota = ''; enlaceNota = ''; extractoNota = '';
-      }
-
-      lineas.forEach(linea => {
+      lineas.forEach((linea, index) => {
         let lineaTrim = linea.trim();
-        let lineaUpper = lineaTrim.toUpperCase();
 
-        if (lineaUpper.startsWith('PORTAL:')) {
-          guardarNotaActual();
-          portalActual = lineaTrim.replace(/^PORTAL:/i, '').trim();
-        } else if (lineaUpper.startsWith('TÍTULO:') || lineaUpper.startsWith('TITULO:')) {
-          tituloNota = lineaTrim.replace(/^TÍTULO:/i, '').replace(/^TITULO:/i, '').trim();
-        } else if (lineaUpper.startsWith('ENLACE:')) {
-          enlaceNota = lineaTrim.replace(/^ENLACE:/i, '').trim();
-        } else if (lineaUpper.startsWith('EXTRACTO:')) {
-          extractoNota = lineaTrim.replace(/^EXTRACTO:/i, '').trim();
-        } else if (lineaTrim !== '') {
-          if (!portalActual) {
-            portalActual = "GENERAL";
+        if (lineaTrim.startsWith('###')) {
+          if (hayNotas) {
+            htmlMedioActual += `</div>`;
+            contenedor.innerHTML += htmlMedioActual;
           }
-          if (!tituloNota) {
-            tituloNota = lineaTrim;
-          } else if (!extractoNota) {
-            extractoNota = lineaTrim;
-          } else {
-            extractoNota += ' ' + lineaTrim;
+          medioActual = lineaTrim.replace(/###|\*\*/g, '').trim();
+          htmlMedioActual = `
+            <div class="grupo-medio">
+              <h3>📡 ${medioActual}</h3>
+          `;
+          hayNotas = true;
+        } else if (lineaTrim.startsWith('*') || lineaTrim.startsWith('-')) {
+          let textoNota = lineaTrim.replace(/^[*\-]\s*/, '').trim();
+          if (textoNota !== '') {
+            htmlMedioActual += `
+              <div class="item-nota">
+                <input type="checkbox" id="nota_${index}" value="${escapeHtml(textoNota)}" data-medio="${escapeHtml(medioActual)}">
+                <label for="nota_${index}">${escapeHtml(textoNota)}</label>
+              </div>
+            `;
+            hayNotas = true;
           }
         }
       });
-      guardarNotaActual();
 
-      if (notas.length === 0) {
-        contenedor.innerHTML = `<div style="padding: 10px; font-size: 12px; background: #fff;">${textoGuion}</div>`;
-        return;
-      }
-
-      let tablaHtml = `
-        <table class="tabla-excel">
-          <thead>
-            <tr>
-              <th style="width: 20%;">Medio / Portal</th>
-              <th style="width: 65%;">Titular y Extracto de la Nota</th>
-              <th style="width: 15%; text-align: center;">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      notas.forEach(nota => {
-        let urlLimpia = nota.enlace;
-        if (urlLimpia && !urlLimpia.startsWith('http')) {
-          urlLimpia = 'https://' + urlLimpia;
-        }
-        if (!urlLimpia || urlLimpia === 'https://') {
-          urlLimpia = `https://www.google.com/search?q=${encodeURIComponent(nota.titulo + ' ' + nota.portal)}`;
-        }
-
-        tablaHtml += `
-          <tr>
-            <td><span class="badge-portal-tabla">📡 ${nota.portal}</span></td>
-            <td>
-              <div class="titulo-tabla">${nota.titulo}</div>
-              <div class="extracto-tabla">${nota.extracto}</div>
-            </td>
-            <td style="text-align: center; vertical-align: middle;">
-              <a href="${urlLimpia}" target="_blank" class="btn-enlace-tabla">
-                🔗 Leer nota
-              </a>
-            </td>
-          </tr>
+      if (hayNotas) {
+        htmlMedioActual += `</div>`;
+        contenedor.innerHTML += htmlMedioActual;
+        
+        // Botón para procesar la segunda etapa con las notas seleccionadas
+        contenedor.innerHTML += `
+          <button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">
+            🎙️ Generar Guión con las Notas Seleccionadas
+          </button>
         `;
-      });
-
-      tablaHtml += `
-          </tbody>
-        </table>
-      `;
-
-      contenedor.innerHTML = tablaHtml;
+      } else {
+        contenedor.innerHTML += `<div style="padding: 10px; font-size: 12px;">${textoGuion}</div>`;
+      }
     }
 
-    async function solicitarGuion(endpoint, esOpcion4) {
-      const btnEditado = document.getElementById('btnEditado');
-      const btnOriginal = document.getElementById('btnOriginal');
-      const btnSintesis = document.getElementById('btnSintesis');
-      const btnEnlaces = document.getElementById('btnEnlaces');
-      const btnBloque = document.getElementById('btnBloque');
+    function escapeHtml(text) {
+      return text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    async function solicitarSintesisConCasillas() {
+      const endpoint = '/api/sintesis-filtro';
       const btnSintesisFiltro = document.getElementById('btnSintesisFiltro');
       const btnCopiar = document.getElementById('btnCopiar');
-      
       const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
       const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
+      const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
       const alerta = document.getElementById('alerta');
 
       const barraProgreso = document.getElementById('barraProgreso');
       const textoPorcentaje = document.getElementById('textoPorcentaje');
       const loadingTexto = document.getElementById('loadingTexto');
 
-      btnEditado.disabled = true;
-      btnOriginal.disabled = true;
-      btnSintesis.disabled = true;
-      btnEnlaces.disabled = true;
-      btnBloque.disabled = true;
       btnSintesisFiltro.disabled = true;
-
       loading.style.display = 'block';
       alerta.style.display = 'none';
       salidaGuion.style.display = 'none';
       contenedorOpcion4.style.display = 'none';
+      contenedorFiltroCasillas.style.display = 'none';
       btnCopiar.style.display = 'none';
 
       let porcentajeActual = 0;
       barraProgreso.style.width = '0%';
       textoPorcentaje.innerText = '0%';
-      loadingTexto.innerText = 'Iniciando conexión con los portales de noticias...';
-
-      const tiempoEstimadoSegundos = 65;
-      const totalPasos = (tiempoEstimadoSegundos * 1000) / 650; 
-      const incrementoPorPaso = 92 / totalPasos;
+      loadingTexto.innerText = 'Cargando síntesis de prensa para selección...';
 
       const intervaloProgreso = setInterval(() => {
         if (porcentajeActual < 92) {
-          porcentajeActual += incrementoPorPaso;
+          porcentajeActual += 5;
           if (porcentajeActual > 92) porcentajeActual = 92;
-
-          const porcentajeEntero = Math.floor(porcentajeActual);
-          barraProgreso.style.width = porcentajeEntero + '%';
-          textoPorcentaje.innerText = porcentajeEntero + '%';
-
-          if (porcentajeEntero > 15 && porcentajeEntero < 40) {
-            loadingTexto.innerText = 'Extrayendo y limpiando contenidos...';
-          } else if (porcentajeEntero >= 40 && porcentajeEntero < 75) {
-            loadingTexto.innerText = 'Analizando información y procesando con IA...';
-          } else if (porcentajeEntero >= 75) {
-            loadingTexto.innerText = 'Estructurando tabla y finalizando reporte...';
-          }
+          barraProgreso.style.width = porcentajeActual + '%';
+          textoPorcentaje.innerText = porcentajeActual + '%';
         }
-      }, 650);
+      }, 500);
 
       try {
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
-
         const data = await response.json();
 
         clearInterval(intervaloProgreso);
         barraProgreso.style.width = '100%';
         textoPorcentaje.innerText = '100%';
-        loadingTexto.innerText = '¡Proceso completado con éxito!';
 
+        if (data.exito) {
+          contenedorFiltroCasillas.style.display = 'block';
+          renderizarCasillasFiltro(data.guion || data.guionGenerado);
+          mostrarAlerta('Selecciona las notas en las casillas y presiona el botón inferior para armar el guión.', 'exito');
+        } else {
+          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar.'}`, 'error');
+        }
+      } catch (error) {
+        clearInterval(intervaloProgreso);
+        mostrarAlerta('Error de conexión con el servidor.', 'error');
+      } finally {
+        btnSintesisFiltro.disabled = false;
+        loading.style.display = 'none';
+      }
+    }
+
+    function generarSegundaEtapaGuion() {
+      const checkboxes = document.querySelectorAll('#contenedorFiltroCasillas input[type="checkbox"]:checked');
+      if (checkboxes.length === 0) {
+        mostrarAlerta('Por favor selecciona al menos una nota utilizando las casillas.', 'error');
+        return;
+      }
+
+      let notasSeleccionadas = [];
+      checkboxes.forEach(cb => {
+        notasSeleccionadas.push(`- [${cb.getAttribute('data-medio')}] ${cb.value}`);
+      });
+
+      // Mostramos el resultado seleccionado o enviamos a una segunda etapa
+      const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
+      const salidaGuion = document.getElementById('salidaGuion');
+      const btnCopiar = document.getElementById('btnCopiar');
+
+      contenedorFiltroCasillas.style.display = 'none';
+      salidaGuion.style.display = 'block';
+      salidaGuion.value = `**GUIÓN SELECCIONADO PARA XHBAL (Segunda Etapa)**\n\n` + notasSeleccionadas.join('\n');
+      btnCopiar.style.display = 'flex';
+      
+      mostrarAlerta(`¡Guión preparado con éxito con ${checkboxes.length} notas seleccionadas!`, 'exito');
+    }
+
+    // Funciones estándar para los demás botones
+    async function solicitarGuion(endpoint, esOpcion4) {
+      const loading = document.getElementById('loading');
+      const salidaGuion = document.getElementById('salidaGuion');
+      const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
+      const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
+      const btnCopiar = document.getElementById('btnCopiar');
+      const alerta = document.getElementById('alerta');
+
+      loading.style.display = 'block';
+      alerta.style.display = 'none';
+      salidaGuion.style.display = 'none';
+      contenedorOpcion4.style.display = 'none';
+      contenedorFiltroCasillas.style.display = 'none';
+      btnCopiar.style.display = 'none';
+
+      try {
+        const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await response.json();
         if (data.exito) {
           if (esOpcion4) {
             contenedorOpcion4.style.display = 'block';
@@ -540,94 +515,12 @@
           btnCopiar.style.display = 'flex';
           mostrarAlerta('Contenido generado correctamente.', 'exito');
         } else {
-          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar la solicitud.'}`, 'error');
+          mostrarAlerta(`Error: ${data.error}`, 'error');
         }
-
       } catch (error) {
-        clearInterval(intervaloProgreso);
-        console.error('Error:', error);
-        mostrarAlerta('Error de conexión con el servidor local.', 'error');
+        mostrarAlerta('Error de conexión con el servidor.', 'error');
       } finally {
-        setTimeout(() => {
-          btnEditado.disabled = false;
-          btnOriginal.disabled = false;
-          btnSintesis.disabled = false;
-          btnEnlaces.disabled = false;
-          btnBloque.disabled = false;
-          btnSintesisFiltro.disabled = false;
-          loading.style.display = 'none';
-        }, 800);
-      }
-    }
-
-    async function generarGuionPorBloques() {
-      const btnEditado = document.getElementById('btnEditado');
-      const btnOriginal = document.getElementById('btnOriginal');
-      const btnSintesis = document.getElementById('btnSintesis');
-      const btnEnlaces = document.getElementById('btnEnlaces');
-      const btnBloque = document.getElementById('btnBloque');
-      const btnSintesisFiltro = document.getElementById('btnSintesisFiltro');
-      const btnCopiar = document.getElementById('btnCopiar');
-      
-      const loading = document.getElementById('loading');
-      const salidaGuion = document.getElementById('salidaGuion');
-      const contenedorOpcion4 = document.getElementById('contenedorOpcion4');
-      const alerta = document.getElementById('alerta');
-
-      const barraProgreso = document.getElementById('barraProgreso');
-      const textoPorcentaje = document.getElementById('textoPorcentaje');
-      const loadingTexto = document.getElementById('loadingTexto');
-
-      btnEditado.disabled = true;
-      btnOriginal.disabled = true;
-      btnSintesis.disabled = true;
-      btnEnlaces.disabled = true;
-      btnBloque.disabled = true;
-      btnSintesisFiltro.disabled = true;
-
-      loading.style.display = 'block';
-      alerta.style.display = 'none';
-      salidaGuion.style.display = 'none';
-      contenedorOpcion4.style.display = 'none';
-      btnCopiar.style.display = 'none';
-
-      barraProgreso.style.width = '20%';
-      textoPorcentaje.innerText = '20%';
-      loadingTexto.innerText = 'Iniciando barrido inteligente de los portales...';
-
-      try {
-        const response = await fetch('/api/procesar-bloque', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        const data = await response.json();
-
-        barraProgreso.style.width = '100%';
-        textoPorcentaje.innerText = '100%';
-        loadingTexto.innerText = '¡Guión Express completado con éxito!';
-
-        if (data.exito) {
-          salidaGuion.style.display = 'block';
-          salidaGuion.value = data.guion;
-          btnCopiar.style.display = 'flex';
-          mostrarAlerta(`Barrido de portales completado (${data.totalPortales} medios procesados).`, 'exito');
-        } else {
-          mostrarAlerta(`Error: ${data.error || 'No se pudo procesar el barrido.'}`, 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        mostrarAlerta('Error de conexión al procesar el Guión Express.', 'error');
-      } finally {
-        setTimeout(() => {
-          btnEditado.disabled = false;
-          btnOriginal.disabled = false;
-          btnSintesis.disabled = false;
-          btnEnlaces.disabled = false;
-          btnBloque.disabled = false;
-          btnSintesisFiltro.disabled = false;
-          loading.style.display = 'none';
-        }, 800);
+        loading.style.display = 'none';
       }
     }
   </script>
