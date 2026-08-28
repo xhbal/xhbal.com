@@ -59,11 +59,17 @@
       font-size: 12px;
     }
 
+    /* Panel rediseñado en Flexbox para forzar dos filas exactas de 3 botones */
     .panel-botones {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 15px;
+    }
+
+    .panel-botones button {
+      flex: 1 1 calc(33.333% - 8px);
+      min-width: 140px;
     }
 
     button {
