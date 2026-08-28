@@ -570,7 +570,68 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// NUEVA RUTA: PROCESAR NOTAS SELECCIONADAS POR CHECKBOX
+// RUTA 2DA ETAPA: GENERAR GUIÓN CON TITULARES SELECCIONADOS
+// =========================================================
+app.post('/api/generar-guion-seleccion', async (req, res) => {
+  try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
+
+    const { notas } = req.body; // Recibe el array enviado desde el navegador: [{ medio, titular }, ...]
+
+    if (!notas || !Array.isArray(notas) || notas.length === 0) {
+      return res.status(400).json({ 
+        exito: false, 
+        error: 'No se seleccionaron notas para generar el guión.' 
+      });
+    }
+
+    // Organizar el listado de notas seleccionadas agrupadas por su medio
+    let textoNotasSeleccionadas = '';
+    notas.forEach((item, index) => {
+      textoNotasSeleccionadas += `${index + 1}. [Medio: ${item.medio}] ${item.titular}\n`;
+    });
+
+    const promptSistema = `
+Actúa como un locutor y periodista profesional de radio para la estación XHBAL Latitud 93.5 FM en San Cristóbal de las Casas.
+Tu tarea es tomar exclusivamente los siguientes titulares seleccionados y redactar un guión de noticias fluido, dinámico, con un tono de locución en cabina ágil, natural y profesional, listo para salir al aire.
+
+Instrucciones:
+- Redacta la información de manera que suene totalmente natural para ser leída por un locutor de radio (voz hablada).
+- Organiza la lectura de forma clara y profesional.
+- No inventes información adicional que no esté presente en los titulares seleccionados.
+
+Titulares seleccionados para este bloque:
+${textoNotasSeleccionadas}
+    `.trim();
+
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un locutor y periodista profesional de radio para XHBAL Latitud 93.5 FM.' },
+        { role: 'user', content: promptSistema }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+
+    res.json({
+      exito: true,
+      guion: response.data.choices[0].message.content
+    });
+
+  } catch (error) {
+    console.error('Error al generar la segunda etapa del guión:', error);
+    res.status(500).json({ 
+      exito: false, 
+      error: 'Hubo un error en el servidor al generar el guión final.' 
+    });
+  }
+});
+
+// =========================================================
+// RUTA ANTERIOR DE RESPALDO: PROCESAR SELECCIÓN
 // =========================================================
 app.post('/api/procesar-seleccion', async (req, res) => {
   try {
