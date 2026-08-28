@@ -147,7 +147,7 @@
       resize: vertical;
     }
 
-    /* Contenedor interactivo con casillas exclusivo para titulares */
+    /* Contenedor interactivo con casillas para medios y titulares */
     #contenedorFiltroCasillas {
       display: none;
       width: 100%;
@@ -180,6 +180,7 @@
       gap: 8px;
       padding: 6px 0;
       font-size: 12px;
+      margin-left: 10px;
     }
 
     .item-nota input[type="checkbox"] {
@@ -307,7 +308,7 @@
       
       <div id="contenedorOpcion4"></div>
       
-      <!-- Contenedor exclusivo para casillas en titulares -->
+      <!-- Contenedor interactivo con nombres de medios y casillas en titulares -->
       <div id="contenedorFiltroCasillas"></div>
     </div>
   </div>
@@ -329,61 +330,64 @@
 
     function renderizarCasillasFiltro(textoGuion) {
       const contenedor = document.getElementById('contenedorFiltroCasillas');
-      contenedor.innerHTML = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona los titulares que deseas incluir en el guión:</h3>';
+      contenedor.innerHTML = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona los titulares por medio que deseas incluir en el guión:</h3>';
 
       const lineas = textoGuion.split('\n');
       let medioActual = 'GENERAL';
-      let htmlMedioActual = '';
-      let hayNotas = false;
+      let htmlConstruido = '';
+      let grupoAbierto = false;
 
       lineas.forEach((linea, index) => {
         let lineaTrim = linea.trim();
         if (lineaTrim === '') return; // Ignorar líneas vacías
 
-        // Detectar si es un encabezado de sección/medio (ej: ### Portal o **Portal**)
+        // Detectar encabezado de medio / portal (ej: ### Portal o **Portal**)
         if (lineaTrim.startsWith('###') || (lineaTrim.startsWith('**') && lineaTrim.endsWith('**') && !lineaTrim.includes('http'))) {
-          if (hayNotas) {
-            htmlMedioActual += `</div>`;
-            contenedor.innerHTML += htmlMedioActual;
+          if (grupoAbierto) {
+            htmlConstruido += `</div>`; // Cerrar grupo anterior
           }
           medioActual = lineaTrim.replace(/###|\*\*/g, '').trim();
-          htmlMedioActual = `
+          htmlConstruido += `
             <div class="grupo-medio">
               <h3>📡 ${medioActual}</h3>
           `;
-          hayNotas = false; // Aún no hay notas en este grupo
+          grupoAbierto = true;
         } 
-        // Detectar únicamente líneas que parezcan titulares reales (ej: empiezan con *, -, o números)
+        // Detectar titular / nota (empieza con *, -, o números)
         else if (lineaTrim.startsWith('*') || lineaTrim.startsWith('-') || /^\d+[\.\)]/.test(lineaTrim)) {
           let textoNota = lineaTrim.replace(/^[*\-\d\.\)]+\s*/, '').trim();
-          // Descartar si el texto es muy corto o es una URL suelta
-          if (textoNota.length > 5 && !textoNota.startsWith('http')) {
-            htmlMedioActual += `
+          if (textoNota.length > 3 && !textoNota.startsWith('http')) {
+            if (!grupoAbierto) {
+              htmlConstruido += `
+                <div class="grupo-medio">
+                  <h3>📡 ${medioActual}</h3>
+              `;
+              grupoAbierto = true;
+            }
+            htmlConstruido += `
               <div class="item-nota">
                 <input type="checkbox" id="nota_${index}" value="${escapeHtml(textoNota)}" data-medio="${escapeHtml(medioActual)}">
                 <label for="nota_${index}"><strong>${escapeHtml(textoNota)}</strong></label>
               </div>
             `;
-            hayNotas = true;
           }
         }
       });
 
-      if (hayNotas) {
-        htmlMedioActual += `</div>`;
-        contenedor.innerHTML += htmlMedioActual;
-        
-        // Botón para procesar la segunda etapa con los titulares seleccionados
+      // Cerrar el último grupo abierto
+      if (grupoAbierto) {
+        htmlConstruido += `</div>`;
+      }
+
+      if (htmlConstruido !== '') {
+        contenedor.innerHTML += htmlConstruido;
         contenedor.innerHTML += `
           <button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">
             🎙️ Generar Guión con los Titulares Seleccionados
           </button>
         `;
-      } else if (contenedor.innerHTML.includes('grupo-medio')) {
-        contenedor.innerHTML += `</div><button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">🎙️ Generar Guión con los Titulares Seleccionados</button>`;
       } else {
-        // Fallback por si el formato del texto de la API es plano pero estructurado
-        contenedor.innerHTML += `<div style="padding: 10px; font-size: 12px;">${textoGuion}</div>`;
+        contenedor.innerHTML += `<div style="padding: 10px; font-size: 12px;">${escapeHtml(textoGuion)}</div>`;
       }
     }
 
@@ -441,7 +445,7 @@
         if (data.exito) {
           contenedorFiltroCasillas.style.display = 'block';
           renderizarCasillasFiltro(data.guion || data.guionGenerado);
-          mostrarAlerta('Selecciona los titulares que deseas incluir usando las casillas.', 'exito');
+          mostrarAlerta('Revisa los medios y selecciona los titulares deseados.', 'exito');
         } else {
           mostrarAlerta(`Error: ${data.error || 'No se pudo procesar.'}`, 'error');
         }
