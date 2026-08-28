@@ -570,14 +570,14 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// RUTA 2DA ETAPA: GENERAR GUIÓN CON TITULARES SELECCIONADOS
+// RUTA 2DA ETAPA: PASAR NOTAS ÍÍNTEGRAS DE LA SELECCIÓN (ACTUALIZADA)
 // =========================================================
 app.post('/api/generar-guion-seleccion', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const { notas } = req.body; // Recibe el array enviado desde el navegador: [{ medio, titular }, ...]
+    const { notas } = req.body; // Recibe el array enviado desde el navegador con medio, titular y contenido
 
     if (!notas || !Array.isArray(notas) || notas.length === 0) {
       return res.status(400).json({ 
@@ -586,22 +586,22 @@ app.post('/api/generar-guion-seleccion', async (req, res) => {
       });
     }
 
-    // Organizar el listado de notas seleccionadas agrupadas por su medio
+    // Organizar el listado de notas conservando su versión original exacta
     let textoNotasSeleccionadas = '';
     notas.forEach((item, index) => {
-      textoNotasSeleccionadas += `${index + 1}. [Medio: ${item.medio}] ${item.titular}\n`;
+      textoNotasSeleccionadas += `\n--- NOTA ${index + 1} [Medio: ${item.medio}] ---\nTítulo: ${item.titular}\nTexto Original:\n${item.contenido || item.titular}\n`;
     });
 
     const promptSistema = `
-Actúa como un locutor y periodista profesional de radio para la estación XHBAL Latitud 93.5 FM en San Cristóbal de las Casas.
-Tu tarea es tomar exclusivamente los siguientes titulares seleccionados y redactar un guión de noticias fluido, dinámico, con un tono de locución en cabina ágil, natural y profesional, listo para salir al aire.
+Actúa estrictamente como un sistema de transferencia de datos y recopilación documental para la estación XHBAL Latitud 93.5 FM.
+Tu única tarea es tomar los textos y titulares seleccionados a continuación y presentarlos en su **versión íntegra y original**. 
 
-Instrucciones:
-- Redacta la información de manera que suene totalmente natural para ser leída por un locutor de radio (voz hablada).
-- Organiza la lectura de forma clara y profesional.
-- No inventes información adicional que no esté presente en los titulares seleccionados.
+REGLAS ABSOLUTAS:
+1. NO inventes, agregues, edites, resumas ni quites información. 
+2. Respeta palabra por palabra los textos originales proporcionados.
+3. No agregues introducciones de locutor ni saludos falsos; entrega los bloques informativos de manera limpia y tal cual fueron extraídos.
 
-Titulares seleccionados para este bloque:
+Contenido seleccionado:
 ${textoNotasSeleccionadas}
     `.trim();
 
@@ -609,10 +609,10 @@ ${textoNotasSeleccionadas}
     const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un locutor y periodista profesional de radio para XHBAL Latitud 93.5 FM.' },
+        { role: 'system', content: 'Eres un sistema estricto de transferencia de textos originales sin alteraciones.' },
         { role: 'user', content: promptSistema }
       ],
-      temperature: 0.3,
+      temperature: 0.0, // Cero creatividad para evitar cualquier alucinación o modificación
       max_tokens: 4000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
 
@@ -625,7 +625,7 @@ ${textoNotasSeleccionadas}
     console.error('Error al generar la segunda etapa del guión:', error);
     res.status(500).json({ 
       exito: false, 
-      error: 'Hubo un error en el servidor al generar el guión final.' 
+      error: 'Hubo un error en el servidor al procesar la versión íntegra.' 
     });
   }
 });
