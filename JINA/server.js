@@ -526,9 +526,9 @@ ${corpusGeneral}`;
 });
 
 // =========================================================
-// BOTÓN 6: CREACIÓN DE GUION (Con la estructura de Síntesis de Prensa)
+// BOTÓN 6: SÍNTESIS DE PRENSA CON FILTRO (/api/sintesis-filtro)
 // =========================================================
-app.post('/api/sintesis-prensa', async (req, res) => {
+app.post('/api/sintesis-filtro', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
@@ -536,10 +536,10 @@ app.post('/api/sintesis-prensa', async (req, res) => {
     const { fechaHoy } = getFechasFiltro();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptSintesis = `Fecha de hoy: ${fechaHoy}.
+    const promptSintesisFiltro = `Fecha de hoy: ${fechaHoy}.
 
 OBJETIVO:
-Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para la mesa de trabajo de radio.
+Crear un reporte de "Síntesis de Prensa con Filtro" limpio y ordenado para la mesa de trabajo de radio.
 
 REGLAS ESTRICTAS:
 1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
@@ -552,12 +552,12 @@ ${seccionChiapas}
 CONTENIDO NACIONAL:
 ${seccionNacionales}`;
 
-    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
-    const response = await axios.post(apiUrl, {
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.seek.com/chat/completions'; // (O la URL normal de DeepSeek)
+    const response = await axios.post('https://api.deepseek.com/chat/completions', {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y monitoreo de prensa radial.' },
-        { role: 'user', content: promptSintesis }
+        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y filtrado de prensa radial.' },
+        { role: 'user', content: promptSintesisFiltro }
       ],
       temperature: 0.1,
       max_tokens: 8000
@@ -565,6 +565,10 @@ ${seccionNacionales}`;
 
     res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
-    res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
+    res.status(500).json({ exito: false, error: 'Error al generar síntesis con filtro.', detalle: error.message });
   }
+});
+
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });
