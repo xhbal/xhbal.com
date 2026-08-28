@@ -147,7 +147,7 @@
       resize: vertical;
     }
 
-    /* Contenedor interactivo con casillas para la Síntesis con Filtro */
+    /* Contenedor interactivo con casillas exclusivo para titulares */
     #contenedorFiltroCasillas {
       display: none;
       width: 100%;
@@ -178,7 +178,7 @@
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      padding: 5px 0;
+      padding: 6px 0;
       font-size: 12px;
     }
 
@@ -223,19 +223,6 @@
       border-bottom: 1px solid var(--border);
       vertical-align: top;
       color: var(--text-main);
-    }
-
-    .badge-portal-tabla {
-      font-size: 11px;
-      font-weight: 700;
-      color: #0f766e;
-      background: #f0fdfa;
-      padding: 3px 8px;
-      border-radius: 3px;
-      text-transform: uppercase;
-      border: 1px solid #ccfbf1;
-      display: inline-block;
-      white-space: nowrap;
     }
 
     .alerta {
@@ -320,7 +307,7 @@
       
       <div id="contenedorOpcion4"></div>
       
-      <!-- Contenedor interactivo con casillas -->
+      <!-- Contenedor exclusivo para casillas en titulares -->
       <div id="contenedorFiltroCasillas"></div>
     </div>
   </div>
@@ -342,7 +329,7 @@
 
     function renderizarCasillasFiltro(textoGuion) {
       const contenedor = document.getElementById('contenedorFiltroCasillas');
-      contenedor.innerHTML = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona las notas que deseas incluir en el guión:</h3>';
+      contenedor.innerHTML = '<h3 style="margin-bottom: 10px; color: var(--primary); font-size: 13px;">Selecciona los titulares que deseas incluir en el guión:</h3>';
 
       const lineas = textoGuion.split('\n');
       let medioActual = 'GENERAL';
@@ -351,8 +338,10 @@
 
       lineas.forEach((linea, index) => {
         let lineaTrim = linea.trim();
+        if (lineaTrim === '') return; // Ignorar líneas vacías
 
-        if (lineaTrim.startsWith('###')) {
+        // Detectar si es un encabezado de sección/medio (ej: ### Portal o **Portal**)
+        if (lineaTrim.startsWith('###') || (lineaTrim.startsWith('**') && lineaTrim.endsWith('**') && !lineaTrim.includes('http'))) {
           if (hayNotas) {
             htmlMedioActual += `</div>`;
             contenedor.innerHTML += htmlMedioActual;
@@ -362,14 +351,17 @@
             <div class="grupo-medio">
               <h3>📡 ${medioActual}</h3>
           `;
-          hayNotas = true;
-        } else if (lineaTrim.startsWith('*') || lineaTrim.startsWith('-')) {
-          let textoNota = lineaTrim.replace(/^[*\-]\s*/, '').trim();
-          if (textoNota !== '') {
+          hayNotas = false; // Aún no hay notas en este grupo
+        } 
+        // Detectar únicamente líneas que parezcan titulares reales (ej: empiezan con *, -, o números)
+        else if (lineaTrim.startsWith('*') || lineaTrim.startsWith('-') || /^\d+[\.\)]/.test(lineaTrim)) {
+          let textoNota = lineaTrim.replace(/^[*\-\d\.\)]+\s*/, '').trim();
+          // Descartar si el texto es muy corto o es una URL suelta
+          if (textoNota.length > 5 && !textoNota.startsWith('http')) {
             htmlMedioActual += `
               <div class="item-nota">
                 <input type="checkbox" id="nota_${index}" value="${escapeHtml(textoNota)}" data-medio="${escapeHtml(medioActual)}">
-                <label for="nota_${index}">${escapeHtml(textoNota)}</label>
+                <label for="nota_${index}"><strong>${escapeHtml(textoNota)}</strong></label>
               </div>
             `;
             hayNotas = true;
@@ -381,13 +373,16 @@
         htmlMedioActual += `</div>`;
         contenedor.innerHTML += htmlMedioActual;
         
-        // Botón para procesar la segunda etapa con las notas seleccionadas
+        // Botón para procesar la segunda etapa con los titulares seleccionados
         contenedor.innerHTML += `
           <button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">
-            🎙️ Generar Guión con las Notas Seleccionadas
+            🎙️ Generar Guión con los Titulares Seleccionados
           </button>
         `;
+      } else if (contenedor.innerHTML.includes('grupo-medio')) {
+        contenedor.innerHTML += `</div><button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">🎙️ Generar Guión con los Titulares Seleccionados</button>`;
       } else {
+        // Fallback por si el formato del texto de la API es plano pero estructurado
         contenedor.innerHTML += `<div style="padding: 10px; font-size: 12px;">${textoGuion}</div>`;
       }
     }
@@ -446,7 +441,7 @@
         if (data.exito) {
           contenedorFiltroCasillas.style.display = 'block';
           renderizarCasillasFiltro(data.guion || data.guionGenerado);
-          mostrarAlerta('Selecciona las notas en las casillas y presiona el botón inferior para armar el guión.', 'exito');
+          mostrarAlerta('Selecciona los titulares que deseas incluir usando las casillas.', 'exito');
         } else {
           mostrarAlerta(`Error: ${data.error || 'No se pudo procesar.'}`, 'error');
         }
@@ -462,7 +457,7 @@
     function generarSegundaEtapaGuion() {
       const checkboxes = document.querySelectorAll('#contenedorFiltroCasillas input[type="checkbox"]:checked');
       if (checkboxes.length === 0) {
-        mostrarAlerta('Por favor selecciona al menos una nota utilizando las casillas.', 'error');
+        mostrarAlerta('Por favor selecciona al menos un titular utilizando las casillas.', 'error');
         return;
       }
 
@@ -471,7 +466,6 @@
         notasSeleccionadas.push(`- [${cb.getAttribute('data-medio')}] ${cb.value}`);
       });
 
-      // Mostramos el resultado seleccionado o enviamos a una segunda etapa
       const contenedorFiltroCasillas = document.getElementById('contenedorFiltroCasillas');
       const salidaGuion = document.getElementById('salidaGuion');
       const btnCopiar = document.getElementById('btnCopiar');
@@ -481,10 +475,9 @@
       salidaGuion.value = `**GUIÓN SELECCIONADO PARA XHBAL (Segunda Etapa)**\n\n` + notasSeleccionadas.join('\n');
       btnCopiar.style.display = 'flex';
       
-      mostrarAlerta(`¡Guión preparado con éxito con ${checkboxes.length} notas seleccionadas!`, 'exito');
+      mostrarAlerta(`¡Guión preparado con éxito con ${checkboxes.length} titulares seleccionados!`, 'exito');
     }
 
-    // Funciones estándar para los demás botones
     async function solicitarGuion(endpoint, esOpcion4) {
       const loading = document.getElementById('loading');
       const salidaGuion = document.getElementById('salidaGuion');
