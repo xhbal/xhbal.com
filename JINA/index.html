@@ -277,9 +277,9 @@
       <button id="btnBloque" class="btn-opcion-5" onclick="generarGuionPorBloques()">
         ⚡ Guión Express
       </button>
-      <!-- Botón 6: Creación de Guion -->
-      <button id="btnCreacionGuion" class="btn-opcion-6" onclick="solicitarGuion('/api/creacion-guion', false)">
-        🎙️ Creación de Guion
+      <!-- Botón 6: Síntesis de prensa con Filtro -->
+      <button id="btnSintesisFiltro" class="btn-opcion-6" onclick="solicitarGuion('/api/creacion-guion', false)">
+        📰 Síntesis de prensa con Filtro
       </button>
     </div>
 
@@ -462,7 +462,7 @@
       const btnSintesis = document.getElementById('btnSintesis');
       const btnEnlaces = document.getElementById('btnEnlaces');
       const btnBloque = document.getElementById('btnBloque');
-      const btnCreacionGuion = document.getElementById('btnCreacionGuion');
+      const btnSintesisFiltro = document.getElementById('btnSintesisFiltro');
       const btnCopiar = document.getElementById('btnCopiar');
       
       const loading = document.getElementById('loading');
@@ -479,7 +479,7 @@
       btnSintesis.disabled = true;
       btnEnlaces.disabled = true;
       btnBloque.disabled = true;
-      btnCreacionGuion.disabled = true;
+      btnSintesisFiltro.disabled = true;
 
       loading.style.display = 'block';
       alerta.style.display = 'none';
@@ -554,7 +554,7 @@
           btnSintesis.disabled = false;
           btnEnlaces.disabled = false;
           btnBloque.disabled = false;
-          btnCreacionGuion.disabled = false;
+          btnSintesisFiltro.disabled = false;
           loading.style.display = 'none';
         }, 800);
       }
@@ -566,7 +566,7 @@
       const btnSintesis = document.getElementById('btnSintesis');
       const btnEnlaces = document.getElementById('btnEnlaces');
       const btnBloque = document.getElementById('btnBloque');
-      const btnCreacionGuion = document.getElementById('btnCreacionGuion');
+      const btnSintesisFiltro = document.getElementById('btnSintesisFiltro');
       const btnCopiar = document.getElementById('btnCopiar');
       
       const loading = document.getElementById('loading');
@@ -583,7 +583,7 @@
       btnSintesis.disabled = true;
       btnEnlaces.disabled = true;
       btnBloque.disabled = true;
-      btnCreacionGuion.disabled = true;
+      btnSintesisFiltro.disabled = true;
 
       loading.style.display = 'block';
       alerta.style.display = 'none';
@@ -625,7 +625,7 @@
           btnSintesis.disabled = false;
           btnEnlaces.disabled = false;
           btnBloque.disabled = false;
-          btnCreacionGuion.disabled = false;
+          btnSintesisFiltro.disabled = false;
           loading.style.display = 'none';
         }, 800);
       }
