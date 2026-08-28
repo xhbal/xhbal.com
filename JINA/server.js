@@ -526,56 +526,45 @@ ${corpusGeneral}`;
 });
 
 // =========================================================
-// BOTÓN 6: CREACIÓN DE GUION
+// BOTÓN 6: CREACIÓN DE GUION (Copiado de Síntesis de Prensa)
 // =========================================================
 app.post('/api/creacion-guion', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    console.log("🎙️ [Creación de Guion] Procesando solicitud y extrayendo contenido...");
-
-    // Obtenemos los contenidos más recientes automáticamente
+    const { fechaHoy } = getFechasFiltro();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const promptCreacionGuion = `Fecha de hoy: ${fechaHoy}.
 
-    const promptGuion = `A partir de las noticias actuales de Chiapas y México, redacta un guion de locución radial dinámico, con escaleta profesional, entradas, bloques informativos y listo para cabina en XHBAL Latitud 93.5 FM.
+OBJETIVO:
+Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para la mesa de trabajo de radio.
 
-REGLAS:
-1. Omitir absolutamente cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-2. Tono formal, comercial y ágil para radio.
+REGLAS ESTRICTAS:
+1. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
+2. FORMATO DE MONITOREO: Presenta el nombre del medio, la fecha, y enlistados limpios de notas.
+3. OMISIONES: Excluye de manera absoluta cualquier nota o mención sobre Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
 
-NOTICIAS DE CHIAPAS:
+CONTENIDO DE CHIAPAS:
 ${seccionChiapas}
 
-NOTICIAS NACIONALES:
+CONTENIDO NACIONAL:
 ${seccionNacionales}`;
 
-    const respGuion = await axios.post(apiUrl, {
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: 'Eres un productor y locutor de radio profesional experto en redactar escaletas y guiones informativos.' },
-        { role: 'user', content: promptGuion }
+        { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y monitoreo de prensa radial.' },
+        { role: 'user', content: promptCreacionGuion }
       ],
-      temperature: 0.3,
-      max_tokens: 4000
+      temperature: 0.1,
+      max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
-    res.json({ 
-      exito: true, 
-      guion: respGuion.data.choices[0].message.content 
-    });
-
+    res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
-    console.log("❌ Error en Creación de Guion:", error.message);
-    res.status(500).json({ exito: false, error: 'Error al generar el guion.', detalle: error.message });
+    res.status(500).json({ exito: false, error: 'Error al generar la creación de guion.', detalle: error.message });
   }
-});
-
-// =========================================================
-// RUTA DE INICIO DEL SERVIDOR
-// =========================================================
-app.listen(port, () => {
-  console.log(`Servidor de XHBAL corriendo en http://localhost:${port}`);
 });
