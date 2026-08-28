@@ -526,7 +526,7 @@ ${corpusGeneral}`;
 });
 
 // =========================================================
-// BOTÓN 6: CREACIÓN DE GUION (Copiado de Síntesis de Prensa)
+// BOTÓN 6: CREACIÓN DE GUION (Con la estructura de Síntesis de Prensa)
 // =========================================================
 app.post('/api/creacion-guion', async (req, res) => {
   try {
@@ -565,6 +565,6 @@ ${seccionNacionales}`;
 
     res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
-    res.status(500).json({ exito: false, error: 'Error al generar la creación de guion.', detalle: error.message });
+    res.status(500).json({ exito: false, error: 'Error al generar la síntesis para el botón 6.', detalle: error.message });
   }
 });
