@@ -530,37 +530,63 @@ app.post('/api/sintesis-filtro', async (req, res) => {
     const { fechaHoy } = getFechasFiltro();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptSintesisFiltro = `Fecha de hoy: ${fechaHoy}.
+    // Dividimos el procesamiento para evitar cortes de tokens y saturación en la agrupación
+    const promptChiapas = `
+Fecha de hoy: ${fechaHoy}.
+SECCIÓN: CHIAPAS
+Instrucciones estrictas:
+1. Agrupa la información estrictamente por MEDIO (Nombre del medio arriba, y sus notas debajo).
+2. Transcribe los textos de forma íntegra sin resumir ni redactar de más.
+3. Omite absolutamente cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+4. Cero saludos o introducciones.
 
-OBJETIVO:
-Crear un reporte de "Síntesis de Prensa con Filtro" estructurado estrictamente por medio.
-
-INSTRUCCIONES ESTRICTAS (DEBES SEGUIRLAS AL PIE DE LA LETRA):
-1. JERARQUÍA OBLIGATORIA POR MEDIO: Agrupa los datos estrictamente bajo su respectivo MEDIO. Primero muestra el nombre claro del medio y, debajo de este, sus títulos y textos íntegros correspondientes. Prohibido hacer listados independientes de puros títulos y luego puros medios.
-2. TEXTOS ÍNTEGROS SIN MODIFICACIÓN: NO resumas, redactes de nuevo, parafrasees ni alteres el contenido. Transcribe el texto de manera íntegra tal como se recibió.
-3. FILTRADO TOTAL: Oculta y elimina por completo cualquier mención a notas vacías o sin contenido.
-4. OMISIONES: Excluye de manera absoluta cualquier nota o mención sobre Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-5. FORMATO DIRECTO: Cero saludos, introducciones o conclusiones; ve directo a la información estructurada.
-
-CONTENIDO DE CHIAPAS:
+CONTENIDO:
 ${seccionChiapas}
+    `.trim();
 
-CONTENIDO NACIONAL:
-${seccionNacionales}`;
+    const promptNacionales = `
+Fecha de hoy: ${fechaHoy}.
+SECCIÓN: NACIONALES
+Instrucciones estrictas:
+1. Agrupa la información estrictamente por MEDIO (Nombre del medio arriba, y sus notas debajo). Asegúrate de incluir todos los medios nacionales sin omitir ninguno.
+2. Transcribe los textos de forma íntegra sin resumir ni redactar de más.
+3. Omite absolutamente cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+4. Cero saludos o introducciones.
+
+CONTENIDO:
+${seccionNacionales}
+    `.trim();
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
-    const response = await axios.post(apiUrl, {
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: 'Eres un sistema estricto de organización de notas que respeta jerarquías por medio y transfiere textos de forma 100% íntegra sin redactar ni resumir.' },
-        { role: 'user', content: promptSintesisFiltro }
-      ],
-      temperature: 0.0, // Cero creatividad para evitar alteración de textos
-      max_tokens: 8000
-    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
+    
+    // Ejecutamos ambas secciones en paralelo asegurando el uso completo de tokens para cada una
+    const [resChiapas, resNacionales] = await Promise.all([
+      axios.post(apiUrl, {
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: 'Eres un estructurador estricto de noticias por medio. No omitas ningún medio y respeta la jerarquía.' },
+          { role: 'user', content: promptChiapas }
+        ],
+        temperature: 0.0,
+        max_tokens: 4000
+      }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 }),
 
-    res.json({ exito: true, guion: response.data.choices[0].message.content });
+      axios.post(apiUrl, {
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: 'Eres un estructurador estricto de noticias por medio. No omitas ningún medio nacional y respeta la jerarquía.' },
+          { role: 'user', content: promptNacionales }
+        ],
+        temperature: 0.0,
+        max_tokens: 4000
+      }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 })
+    ]);
+
+    const textoFinal = `=== SECCIÓN CHIAPAS ===\n\n${resChiapas.data.choices[0].message.content}\n\n========================================\n\n=== SECCIÓN NACIONALES ===\n\n${resNacionales.data.choices[0].message.content}`;
+
+    res.json({ exito: true, guion: textoFinal });
   } catch (error) {
+    console.error('Error al generar síntesis con filtro:', error);
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con filtro.', detalle: error.message });
   }
 });
@@ -573,7 +599,7 @@ app.post('/api/generar-guion-seleccion', async (req, res) => {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    const { notas } = req.body; // Recibe el array con las notas seleccionadas (debe incluir url, medio y titular)
+    const { notas } = req.body; 
 
     if (!notas || !Array.isArray(notas) || notas.length === 0) {
       return res.status(400).json({ 
@@ -594,7 +620,7 @@ app.post('/api/generar-guion-seleccion', async (req, res) => {
       let textoCompleto = '';
       if (urlNota && urlNota.startsWith('http')) {
         textoCompleto = await limpiarConJina(urlNota);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Pequeña pausa de cortesía
+        await new Promise(resolve => setTimeout(resolve, 500)); 
       } else {
         textoCompleto = nota.contenido || nota.titular || 'Sin contenido disponible';
       }
@@ -606,12 +632,12 @@ app.post('/api/generar-guion-seleccion', async (req, res) => {
 Actúa como un estructurador de contenidos periodísticos estricto. A continuación se presentan las notas seleccionadas por el usuario junto con sus textos íntegros recién extraídos de la web.
 
 INSTRUCCIONES ESTRICTAS (DEBES SEGUIRLAS AL PIE DE LA LETRA):
-1. AGRUPACIÓN JERÁRQUICA OBLIGATORIA: Agrupa las notas estrictamente por MEDIO. Primero coloca el nombre del MEDIO de forma clara y, debajo de este, sus respectivos titulares y notas completas. Prohibido mezclar los medios o hacer listas separadas de puros títulos y luego puros medios.
-2. TEXTOS ÍNTEGROS SIN REDACCIÓN: NO redactes, resumas, parafrasees ni inventes texto. Debes transcribir y presentar los textos íntegros tal como llegaron en la extracción, respetando los datos duros originales.
-3. FILTRADO OBLIGATORIO: Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas en cualquier parte del texto o los títulos.
-4. FORMATO DIRECTO: Cero saludos, cero introducciones y cero conclusiones. Ve directo al contenido estructurado por medio.
+1. AGRUPACIÓN JERÁRQUICA OBLIGATORIA: Agrupa las notas estrictamente por MEDIO. Primero coloca el nombre del MEDIO de forma clara como encabezado y, debajo de este, sus respectivos titulares y notas completas. Prohibido mezclar los medios o hacer listas separadas.
+2. TEXTOS ÍNTEgROS SIN REDACCIÓN: NO redactes, resumas, parafrasees ni inventes texto. Debes transcribir y presentar los textos íntegros tal como llegaron en la extracción.
+3. FILTRADO OBLIGATORIO: Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+4. FORMATO DIRECTO: Cero saludos, cero introducciones y cero conclusiones.
 
-NOTAS SELECCIONADAS PARA PARSEAR:
+NOTAS SELECCIONADAS PARA PROCESAR:
 ${corpusSeleccion}
     `.trim();
 
@@ -622,7 +648,7 @@ ${corpusSeleccion}
         { role: 'system', content: 'Eres un sistema estricto de organización de notas que respeta jerarquías por medio y transfiere textos de forma 100% íntegra sin redactar ni resumir.' },
         { role: 'user', content: promptSistema }
       ],
-      temperature: 0.0, // Temperatura a 0 para impedir que el modelo invente o reformule redacciones
+      temperature: 0.0, 
       max_tokens: 8000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
@@ -638,54 +664,4 @@ ${corpusSeleccion}
       error: 'Hubo un error en el servidor al procesar la selección con Jina y DeepSeek.' 
     });
   }
-});
-
-// =========================================================
-// RUTA ANTERIOR DE RESPALDO: PROCESAR SELECCIÓN
-// =========================================================
-app.post('/api/procesar-seleccion', async (req, res) => {
-  try {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
-
-    const { notasSeleccionadas } = req.body;
-
-    if (!notasSeleccionadas || notasSeleccionadas.length === 0) {
-      return res.status(400).json({ exito: false, error: 'No se seleccionó ninguna nota.' });
-    }
-
-    const corpusSeleccion = notasSeleccionadas.map((n, index) => 
-      `NOTA ${index + 1}:\nMedio: ${n.medio}\nTítulo: ${n.titulo}\nEnlace: ${n.enlace || 'N/A'}\n`
-    ).join("\n----------------------------------------\n");
-
-    const promptSeleccion = `A continuación se presenta un conjunto de notas específicas seleccionadas previamente.
-
-INSTRUCCIONES:
-1. Redacta un reporte limpio, profesional y estructurado exclusivamente con estas notas seleccionadas.
-2. Mantén un formato ordenado y sin repetir información.
-3. Incluye los enlaces correspondientes si la nota los requiere.
-
-NOTAS SELECCIONADAS:
-${corpusSeleccion}`;
-
-    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
-    const response = await axios.post(apiUrl, {
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: 'Eres un editor de noticias experto en procesar reportes basados estrictamente en una selección previa.' },
-        { role: 'user', content: promptSeleccion }
-      ],
-      temperature: 0.2,
-      max_tokens: 4000
-    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
-
-    res.json({ exito: true, guion: response.data.choices[0].message.content });
-  } catch (error) {
-    console.log("❌ Error al procesar selección:", error.message);
-    res.status(500).json({ exito: false, error: 'Error al procesar las notas seleccionadas.', detalle: error.message });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
 });
