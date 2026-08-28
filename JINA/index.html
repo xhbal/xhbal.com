@@ -59,7 +59,7 @@
       font-size: 12px;
     }
 
-    /* Panel rediseñado en Flexbox para forzar dos filas exactas de 3 botones */
+    /* Panel en Flexbox para forzar dos filas exactas de 3 botones */
     .panel-botones {
       display: flex;
       flex-wrap: wrap;
@@ -69,23 +69,24 @@
 
     .panel-botones button {
       flex: 1 1 calc(33.333% - 8px);
-      min-width: 140px;
+      min-width: 130px;
     }
 
     button {
       background-color: var(--primary);
       color: white;
       border: none;
-      padding: 8px 12px;
+      padding: 8px 8px;
       border-radius: 4px;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.2s;
-      font-size: 12px;
+      font-size: 11px; /* Ajustado para acomodar textos largos sin amontonarse */
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
+      white-space: nowrap;
     }
 
     button:hover { background-color: var(--primary-hover); }
