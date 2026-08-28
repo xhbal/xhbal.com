@@ -359,7 +359,7 @@
         let lineaTrim = linea.trim();
         if (lineaTrim === '') return;
 
-        // Detectar encabezado de medio / portal de forma flexible (incluyendo formatos tipo **Portal** o ### Portal)
+        // Detectar encabezado de medio / portal de forma flexible
         if (lineaTrim.startsWith('###') || lineaTrim.startsWith('##') || (lineaTrim.startsWith('**') && lineaTrim.endsWith('**') && !lineaTrim.includes('http') && lineaTrim.length < 50)) {
           if (notaActual) {
             notasArray.push(notaActual);
@@ -379,12 +379,20 @@
               id: `nota_${notasIndex}`,
               medio: medioActual,
               titular: textoNota,
+              url: '',
               contenidoLines: [textoNota]
             };
           }
         } 
         else {
-          // Si es un párrafo o extracto complementario debajo del titular, se acumula
+          // Detectar si la línea contiene una URL asociada a la nota actual
+          if (notaActual && (lineaTrim.includes('http://') || lineaTrim.includes('https://'))) {
+            const urlMatch = lineaTrim.match(/(https?:\/\/[^\s\)]+)/);
+            if (urlMatch) {
+              notaActual.url = urlMatch[0];
+            }
+          }
+          // Si es un párrafo o extracto complementario, se acumula
           if (notaActual && lineaTrim.length > 0 && !lineaTrim.startsWith('http')) {
             notaActual.contenidoLines.push(lineaTrim);
           }
@@ -411,8 +419,8 @@
           let contenidoCompleto = nota.contenidoLines.join('\n');
           htmlContruido += `
             <div class="item-nota">
-              <input type="checkbox" id="${nota.id}" value="${escapeHtml(nota.titular)}" data-contenido="${escapeHtml(contenidoCompleto)}" data-medio="${escapeHtml(nota.medio)}">
-              <label for="${nota.id}"><strong>${escapeHtml(nota.titular)}</strong></label>
+              <input type="checkbox" id="${nota.id}" value="${escapeHtml(nota.titular)}" data-url="${escapeHtml(nota.url)}" data-contenido="${escapeHtml(contenidoCompleto)}" data-medio="${escapeHtml(nota.medio)}">
+              <label for="${nota.id}"><strong>${escapeHtml(nota.titular)}</strong> ${nota.url ? `<a href="${nota.url}" target="_blank" style="font-size:10px; color:var(--accent); margin-left:5px;">(Ver enlace)</a>` : ''}</label>
             </div>
           `;
         });
@@ -422,11 +430,11 @@
       if (Object.keys(mediosMap).length > 0) {
         htmlContruido += `
           <button class="btn-accion-etapa2" onclick="generarSegundaEtapaGuion()">
-            🎙️ Generar Guión con los Titulares Seleccionados
+            🎙️ Generar Guión con los Titulares Seleccionados (Vía Jina & DeepSeek)
           </button>
         `;
         contenedor.innerHTML = htmlContruido;
-        ultimoTextoCasillasHtml = htmlContruido; // Guardar estado para poder regresar
+        ultimoTextoCasillasHtml = htmlContruido; 
       } else {
         contenedor.innerHTML = `<div style="padding: 10px; font-size: 12px;">${escapeHtml(textoGuion)}</div>`;
       }
@@ -438,7 +446,7 @@
       document.getElementById('btnCopiar').style.display = 'none';
       document.getElementById('contenedorFiltroCasillas').style.display = 'block';
       document.getElementById('labelEstado').innerText = 'Monitoreo de Noticias (Selección)';
-      mostrarAlerta('Regresaste a la selección de casillas.', 'exito');
+      mostrarAlerta('Regresaste al panel de selección de casillas.', 'exito');
     }
 
     async function solicitarSintesisConCasillas() {
@@ -519,6 +527,7 @@
         notasSeleccionadas.push({
           medio: cb.getAttribute('data-medio'),
           titular: cb.value,
+          url: cb.getAttribute('data-url') || '',
           contenido: cb.getAttribute('data-contenido') || cb.value
         });
       });
@@ -534,7 +543,7 @@
       btnEtapa2.disabled = true;
       loading.style.display = 'block';
       alerta.style.display = 'none';
-      document.getElementById('loadingTexto').innerText = 'Transmitiendo notas originales sin alteraciones a DeepSeek...';
+      document.getElementById('loadingTexto').innerText = 'Extrayendo texto fresco con Jina y procesando con DeepSeek...';
       document.getElementById('barraProgreso').style.width = '100%';
       document.getElementById('textoPorcentaje').innerText = '100%';
 
@@ -552,9 +561,9 @@
           salidaGuion.style.display = 'block';
           salidaGuion.value = data.guion || data.guionGenerado;
           btnCopiar.style.display = 'flex';
-          btnRegresarCasillas.style.display = 'flex'; // Muestra el botón de regreso
-          document.getElementById('labelEstado').innerText = 'Guión Final Generado';
-          mostrarAlerta('¡Contenido íntegro generado con éxito!', 'exito');
+          btnRegresarCasillas.style.display = 'flex'; 
+          document.getElementById('labelEstado').innerText = 'Guión Final con Notas Íntegras';
+          mostrarAlerta('¡Contenido íntegro extraído y generado con éxito!', 'exito');
         } else {
           mostrarAlerta(`Error: ${data.error || 'No se pudo generar el guión.'}`, 'error');
         }
