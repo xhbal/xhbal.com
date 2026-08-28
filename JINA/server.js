@@ -428,7 +428,6 @@ app.post('/api/procesar-bloque', async (req, res) => {
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
     let notasProcesadas = [];
 
-    // Bucle estricto por cada uno de los 25 portales
     for (let i = 0; i < todosLosPortales.length; i++) {
       const portal = todosLosPortales[i];
       console.log(`🔍 [${i + 1}/25] Procesando portal: ${portal.nombre}`);
@@ -440,7 +439,7 @@ app.post('/api/procesar-bloque', async (req, res) => {
         const promptSeleccion = `Estás analizando la portada del medio "${portal.nombre}". 
 Selecciona UNA SOLA NOTA que sea la más importante de este portal y extrae su URL absoluta.
 Responde estrictamente con el formato:
-URL_SELECCIONADA: [URL de la nota]
+URL_SELECCIONADA: https://www.spanishdict.com/translate/la%20nota
 
 CONTENIDO DE LA PORTADA:
 ${contenidoPortada}`;
@@ -490,10 +489,10 @@ ${contenidoPortada}`;
     const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
 REGLAS ESTRICTAS DE DIRECCIÓN DE NOTICIAS:
-1. CERO DUPLICADOS Y CERO TEMAS REPETIDOS: Haz un filtro implacable. Si dos o más portales abordan el mismo hecho, detención, conferencia, personaje o temática (por ejemplo, casos judiciales específicos, iniciativas presidenciales o reuniones bilaterales repetidas), ELIMINA TODAS LAS COPIAS Y QUÉDATE CON UNA SOLA EN UN SOLO MEDIO. Los demás portales afectados deben mostrar una noticia completamente distinta. Variedad temática absoluta.
-2. EXTENSIÓN Y PROFUNDIDAD ADECUADA: No recortes las notas a una sola línea. Cada nota seleccionada debe tener una síntesis desarrollada, clara y robusta (de 3 a 5 oraciones con los datos duros más importantes).
+1. CERO DUPLICADOS Y CERO TEMAS REPETIDOS: Haz un filtro implacable. Si dos o más portales abordan el mismo hecho, detención, conferencia, personaje o temática, ELIMINA TODAS LAS COPIAS Y QUÉDATE CON UNA SOLA EN UN SOLO MEDIO.
+2. EXTENSIÓN Y PROFUNDIDAD ADECUADA: Cada nota seleccionada debe tener una síntesis desarrollada, clara y robusta (de 3 a 5 oraciones con los datos duros más importantes).
 3. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
-4. FORMATO ESTRICTO DE SALIDA: Presenta UNICAMENTE la lista de medios con el formato indicado abajo. ESTÁ PROHIBIDO agregar "Síntesis General", conclusiones, introducciones, notas finales o despedidas al final del texto.
+4. FORMATO ESTRICTO DE SALIDA: Presenta UNICAMENTE la lista de medios con el formato indicado abajo.
 
 FORMATO POR CADA MEDIO:
 [NOMBRE DEL MEDIO]
@@ -525,27 +524,33 @@ ${corpusGeneral}`;
     res.status(500).json({ exito: false, error: 'Error al procesar el barrido.', detalle: error.message });
   }
 });
+
 // =========================================================
-// BOTÓN 6: CREACIÓN DE GUION (Copia del Botón 3)
+// BOTÓN 6: CREACIÓN DE GUION
 // =========================================================
 app.post('/api/creacion-guion', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
 
-    console.log("🎙️ [Creación de Guion] Procesando solicitud...");
+    console.log("🎙️ [Creación de Guion] Procesando solicitud y extrayendo contenido...");
 
-    // AQUÍ VA LA LÓGICA ORIGINAL QUE TIENES EN EL BOTÓN 3
-    // Por ejemplo, si el Botón 3 procesa un texto o recopila notas para armar la escaleta de locución:
-    const { contenidoBase } = req.body; 
+    // Obtenemos los contenidos más recientes automáticamente
+    const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
     const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
 
-    const promptGuion = `Con base en la información proporcionada, redacta un guion de locución radial dinámico, profesional y listo para cabina...
-    
-    CONTENIDO BASE:
-    ${contenidoBase || "Sin contenido previo"}
-    `;
+    const promptGuion = `A partir de las noticias actuales de Chiapas y México, redacta un guion de locución radial dinámico, con escaleta profesional, entradas, bloques informativos y listo para cabina en XHBAL Latitud 93.5 FM.
+
+REGLAS:
+1. Omitir absolutamente cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
+2. Tono formal, comercial y ágil para radio.
+
+NOTICIAS DE CHIAPAS:
+${seccionChiapas}
+
+NOTICIAS NACIONALES:
+${seccionNacionales}`;
 
     const respGuion = await axios.post(apiUrl, {
       model: 'deepseek-chat',
@@ -555,7 +560,7 @@ app.post('/api/creacion-guion', async (req, res) => {
       ],
       temperature: 0.3,
       max_tokens: 4000
-    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 120000 });
 
     res.json({ 
       exito: true, 
@@ -566,4 +571,11 @@ app.post('/api/creacion-guion', async (req, res) => {
     console.log("❌ Error en Creación de Guion:", error.message);
     res.status(500).json({ exito: false, error: 'Error al generar el guion.', detalle: error.message });
   }
+});
+
+// =========================================================
+// RUTA DE INICIO DEL SERVIDOR
+// =========================================================
+app.listen(port, () => {
+  console.log(`Servidor de XHBAL corriendo en http://localhost:${port}`);
 });
