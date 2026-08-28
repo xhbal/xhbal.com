@@ -570,7 +570,7 @@ ${seccionNacionales}`;
 });
 
 // =========================================================
-// RUTA 2DA ETAPA: PASAR NOTAS ÍÍNTEGRAS DE LA SELECCIÓN (ACTUALIZADA)
+// RUTA 2DA ETAPA: PASAR NOTAS ÍNTEGRAS DE LA SELECCIÓN
 // =========================================================
 app.post('/api/generar-guion-seleccion', async (req, res) => {
   try {
@@ -612,7 +612,7 @@ ${textoNotasSeleccionadas}
         { role: 'system', content: 'Eres un sistema estricto de transferencia de textos originales sin alteraciones.' },
         { role: 'user', content: promptSistema }
       ],
-      temperature: 0.0, // Cero creatividad para evitar cualquier alucinación o modificación
+      temperature: 0.0,
       max_tokens: 4000
     }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
 
