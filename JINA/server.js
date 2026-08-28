@@ -528,7 +528,7 @@ ${corpusGeneral}`;
 // =========================================================
 // BOTÓN 6: CREACIÓN DE GUION (Con la estructura de Síntesis de Prensa)
 // =========================================================
-app.post('/api/creacion-guion', async (req, res) => {
+app.post('/api/sintesis-prensa', async (req, res) => {
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
@@ -536,7 +536,7 @@ app.post('/api/creacion-guion', async (req, res) => {
     const { fechaHoy } = getFechasFiltro();
     const { seccionChiapas, seccionNacionales } = await obtenerContenidoPortales();
 
-    const promptCreacionGuion = `Fecha de hoy: ${fechaHoy}.
+    const promptSintesis = `Fecha de hoy: ${fechaHoy}.
 
 OBJETIVO:
 Crear un reporte de "Síntesis de Prensa" (Monitoreo de Medios) limpio y ordenado para la mesa de trabajo de radio.
@@ -557,7 +557,7 @@ ${seccionNacionales}`;
       model: 'deepseek-chat',
       messages: [
         { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y monitoreo de prensa radial.' },
-        { role: 'user', content: promptCreacionGuion }
+        { role: 'user', content: promptSintesis }
       ],
       temperature: 0.1,
       max_tokens: 8000
@@ -565,6 +565,6 @@ ${seccionNacionales}`;
 
     res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
-    res.status(500).json({ exito: false, error: 'Error al generar la síntesis para el botón 6.', detalle: error.message });
+    res.status(500).json({ exito: false, error: 'Error al generar síntesis de prensa.', detalle: error.message });
   }
 });
