@@ -355,17 +355,19 @@
       let notasArray = [];
       let notaActual = null;
 
+      lineas.keys(); // Mantiene compatibilidad
+
       lineas.forEach((linea) => {
         let lineaTrim = linea.trim();
         if (lineaTrim === '') return;
 
-        // Detectar encabezado de medio / portal de forma flexible
-        if (lineaTrim.startsWith('###') || lineaTrim.startsWith('##') || (lineaTrim.startsWith('**') && lineaTrim.endsWith('**') && !lineaTrim.includes('http') && lineaTrim.length < 50)) {
+        // Estricto: Solo detecta encabezados Markdown reales (### o ##) como nombres de medios/portales
+        if (lineaTrim.startsWith('###') || lineaTrim.startsWith('##')) {
           if (notaActual) {
             notasArray.push(notaActual);
             notaActual = null;
           }
-          medioActual = lineaTrim.replace(/#+|\*\*/g, '').trim();
+          medioActual = lineaTrim.replace(/#+/g, '').trim();
         } 
         // Detectar titular / nota (comienza con *, -, o números)
         else if (lineaTrim.startsWith('*') || lineaTrim.startsWith('-') || /^\d+[\.\)]/.test(lineaTrim)) {
