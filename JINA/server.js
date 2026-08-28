@@ -489,7 +489,7 @@ ${contenidoPortada}`;
     const promptFinal = `A continuación se presenta un compendio de notas íntegras extraídas de ${notasProcesadas.length} portales diferentes de Chiapas y nacionales.
 
 REGLAS ESTRICTAS DE DIRECCIÓN DE NOTICIAS:
-1. CERO DUPLICADOS Y CERO TEMAS REPETIDOS: Haz un filtro implacable. Si dos o más portales abordan el mismo hecho, detención, conferencia, personaje o temática, ELIMINA TODAS LAS COPIAS Y QUÉDATE CON UNA SOLA EN UN SOLO MEDIO.
+1. CERO DUPLICADOS Y CERO TEMAS REPETIDOS: Haz un filtro implacable. Si two o más portales abordan el mismo hecho, detención, conferencia, personaje o temática, ELIMINA TODAS LAS COPIAS Y QUÉDATE CON UNA SOLA EN UN SOLO MEDIO.
 2. EXTENSIÓN Y PROFUNDIDAD ADECUADA: Cada nota seleccionada debe tener una síntesis desarrollada, clara y robusta (de 3 a 5 oraciones con los datos duros más importantes).
 3. Oculta y omite de forma absoluta cualquier mención a Eduardo Ramírez, su apodo o siglas "ERA", o al Gobierno de Chiapas.
 4. FORMATO ESTRICTO DE SALIDA: Presenta UNICAMENTE la lista de medios con el formato indicado abajo.
@@ -552,8 +552,8 @@ ${seccionChiapas}
 CONTENIDO NACIONAL:
 ${seccionNacionales}`;
 
-    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.seek.com/chat/completions'; // (O la URL normal de DeepSeek)
-    const response = await axios.post('https://api.deepseek.com/chat/completions', {
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
       model: 'deepseek-chat',
       messages: [
         { role: 'system', content: 'Eres un analista de medios enfocado en la síntesis y filtrado de prensa radial.' },
@@ -566,6 +566,52 @@ ${seccionNacionales}`;
     res.json({ exito: true, guion: response.data.choices[0].message.content });
   } catch (error) {
     res.status(500).json({ exito: false, error: 'Error al generar síntesis con filtro.', detalle: error.message });
+  }
+});
+
+// =========================================================
+// NUEVA RUTA: PROCESAR NOTAS SELECCIONADAS POR CHECKBOX
+// =========================================================
+app.post('/api/procesar-seleccion', async (req, res) => {
+  try {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) return res.status(500).json({ exito: false, error: 'API Key no configurada.' });
+
+    const { notasSeleccionadas } = req.body;
+
+    if (!notasSeleccionadas || notasSeleccionadas.length === 0) {
+      return res.status(400).json({ exito: false, error: 'No se seleccionó ninguna nota.' });
+    }
+
+    const corpusSeleccion = notasSeleccionadas.map((n, index) => 
+      `NOTA ${index + 1}:\nMedio: ${n.medio}\nTítulo: ${n.titulo}\nEnlace: ${n.enlace || 'N/A'}\n`
+    ).join("\n----------------------------------------\n");
+
+    const promptSeleccion = `A continuación se presenta un conjunto de notas específicas seleccionadas por el locutor para el noticiero de radio.
+
+INSTRUCCIONES:
+1. Redacta un guion de locución fluido, profesional y listo para aire exclusivamente con estas notas seleccionadas.
+2. Mantén un formato limpio, estructurado y sin repetir información.
+3. Incluye los enlaces correspondientes si la nota los requiere.
+
+NOTAS SELECCIONADAS:
+${corpusSeleccion}`;
+
+    const apiUrl = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions';
+    const response = await axios.post(apiUrl, {
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: 'Eres un editor de noticias experto en radio que redacta guiones basados estrictamente en una selección previa.' },
+        { role: 'user', content: promptSeleccion }
+      ],
+      temperature: 0.2,
+      max_tokens: 4000
+    }, { headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 });
+
+    res.json({ exito: true, guion: response.data.choices[0].message.content });
+  } catch (error) {
+    console.log("❌ Error al procesar selección:", error.message);
+    res.status(500).json({ exito: false, error: 'Error al procesar las notas seleccionadas.', detalle: error.message });
   }
 });
 
